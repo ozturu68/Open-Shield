@@ -43,7 +43,8 @@
     ":xpath(//div[contains(@class,'ad')]//span[contains(text(),'Sponsor')])",
     ":xpath(//div[contains(@id,'google_ads')])",
     "div:matches-css(position: fixed):matches-css(z-index: 9999):has(img[src*='ad'])",
-    "div:matches-css-after(content: /ad/):upward(1)"
+    "div:matches-css(position: fixed):matches-css(z-index: 99999):upward(1)",
+    "a:min-text-length(3):matches-css(display: block):has(img)"
   ];
 
   const HIDE_CSS = "display:none!important;visibility:hidden!important;opacity:0!important;height:0!important;min-height:0!important;max-height:0!important;pointer-events:none!important";
@@ -54,7 +55,7 @@
     if (!el || el.nodeType !== 1) return false;
 
     // :: operator chain
-    const parts = selector.split(/(?=:(?:has-text|matches-css|xpath|upward|has|not|min-text-length|matches-attr|matches-path)\()/);
+    const parts = selector.split(/(?=:(?:has-text|matches-css-after|matches-css-before|matches-css|xpath|upward|has|not|min-text-length|matches-attr|matches-path)\()/);
 
     let current = el;
     for (const part of parts) {
@@ -127,8 +128,12 @@
         const re = new RegExp(path.replace(/^\//, "").replace(/\/$/, ""));
         if (!re.test(location.pathname)) return false;
       } else if (current.matches) {
-        // Standard CSS selector
-        if (!current.matches(part)) return false;
+        // Only attempt matches() if it looks like a standard CSS selector (no procedural syntax)
+        if (!part.includes(":matches-css") && !part.includes(":xpath(") && !part.includes(":has-text") && !part.includes(":upward") && !part.includes(":min-text-length") && !part.includes(":matches-attr") && !part.includes(":matches-path")) {
+          try {
+            if (!current.matches(part)) return false;
+          } catch { return false; }
+        }
       }
     }
     return true;

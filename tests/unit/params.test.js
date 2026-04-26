@@ -15,21 +15,30 @@ function loadRules() {
 }
 
 function simulateDNRRedirect(url, rules) {
-  for (const rule of rules) {
-    if (rule.action?.type === "redirect" && rule.condition?.regexFilter) {
-      const re = new RegExp(rule.condition.regexFilter);
-      const match = url.match(re);
-      if (match) {
-        const sub = rule.action.redirect.regexSubstitution;
-        // Simple replacement of \1, \2, \3
-        return sub
-          .replace(/\\1/g, match[1] || "")
-          .replace(/\\2/g, match[2] || "")
-          .replace(/\\3/g, match[3] || "");
+  try {
+    const u = new URL(url);
+    for (const rule of rules) {
+      if (rule.action?.type === "redirect" && rule.action.redirect?.transform?.queryTransform?.removeParams) {
+        for (const param of rule.action.redirect.transform.queryTransform.removeParams) {
+          u.searchParams.delete(param);
+        }
+      }
+      // Legacy regexFilter support (for backward compat)
+      if (rule.action?.type === "redirect" && rule.condition?.regexFilter) {
+        const re = new RegExp(rule.condition.regexFilter);
+        const match = url.match(re);
+        if (match) {
+          const sub = rule.action.redirect.regexSubstitution;
+          url = sub
+            .replace(/\\1/g, match[1] || "")
+            .replace(/\\2/g, match[2] || "")
+            .replace(/\\3/g, match[3] || "");
+          return url;
+        }
       }
     }
-  }
-  return url;
+    return u.toString();
+  } catch { return url; }
 }
 
 test("params.json is valid JSON array", () => {
@@ -47,7 +56,17 @@ test("All rules have required DNR fields", () => {
   }
 });
 
-test("Regex rules strip known tracking parameters", () => {
+test("Rules use queryTransform.removeParams format", () => {
+  const rules = loadRules();
+  for (const rule of rules) {
+    assert.ok(
+      rule.action?.redirect?.transform?.queryTransform?.removeParams,
+      "Rule should use queryTransform.removeParams"
+    );
+  }
+});
+
+test("RemoveParams rules strip known tracking parameters", () => {
   const rules = loadRules();
   const cases = [
     {
@@ -68,6 +87,16 @@ test("Regex rules strip known tracking parameters", () => {
     {
       input: "https://example.com/?gclid=xyz",
       expectNo: ["gclid="]
+    },
+    {
+      input: "https://example.com/?gclid=abc&gclsrc=def&keep=yes",
+      expectNo: ["gclid=", "gclsrc="],
+      expectYes: ["keep=yes"]
+    },
+    {
+      input: "https://example.com/?ttclid=test&msclkid=test2&real=param",
+      expectNo: ["ttclid=", "msclkid="],
+      expectYes: ["real=param"]
     }
   ];
 
@@ -80,4 +109,19 @@ test("Regex rules strip known tracking parameters", () => {
       assert.ok(result.includes(good), `${good} should be preserved in ${c.input} (got ${result})`);
     }
   }
+});
+
+test("Non-tracking params are preserved", () => {
+  const rules = loadRules();
+  const url = "https://example.com/page?q=search&page=2&sort=desc";
+  const result = simulateDNRRedirect(url, rules);
+  assert.ok(result.includes("q=search"));
+  assert.ok(result.includes("sort=desc"));
+});
+
+test("URL without params is unchanged", () => {
+  const rules = loadRules();
+  const url = "https://example.com/clean/path";
+  const result = simulateDNRRedirect(url, rules);
+  assert.strictEqual(result, url);
 });
