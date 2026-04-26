@@ -11,7 +11,8 @@
     "tabs",
     "scripting",
     "webNavigation",
-    "browsingData"
+    "browsingData",
+    "alarms"
   ],
   "host_permissions": ["<all_urls>"],
   "background": {

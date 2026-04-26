@@ -5,12 +5,19 @@
 export const DEFAULT_SETTINGS = {
   ads: "standard",      // "standard" | "aggressive" | "off"
   fp: true,             // fingerprinting protection
+  fpLevel: "medium",    // "low" | "medium" | "high"
   https: true,          // https upgrade
   cookies: "third-party",
   bounce: true,
   params: true,
   cosmetic: true,
   shred: false
+};
+
+export const FP_NOISE_FACTORS = {
+  low: 0.25,
+  medium: 1,
+  high: 3
 };
 
 export const KEY = {

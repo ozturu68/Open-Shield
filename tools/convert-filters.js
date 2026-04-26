@@ -115,15 +115,27 @@ function main() {
   const rules = [];
   const seen = new Set();
   let nextId = 1;
+  let skippedComments = 0;
+  let skippedUnsupported = 0;
+  let skippedMalformed = 0;
+  let skippedDuplicates = 0;
 
   for (const line of lines) {
     if (rules.length >= MAX_RULES) break;
-    const rule = convertLine(line, nextId);
-    if (!rule) continue;
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("!") || trimmed.startsWith("[")) { skippedComments++; continue; }
+    if (trimmed.includes("##") || trimmed.includes("#@#") || trimmed.includes("#?#")) { skippedUnsupported++; continue; }
+    if (trimmed.includes("$csp") || trimmed.includes("$redirect") || trimmed.includes("$removeparam")) { skippedUnsupported++; continue; }
+    if (trimmed.length > 4096) { skippedMalformed++; continue; }
 
-    // Deduplicate by urlFilter/regexFilter
+    let rule;
+    try {
+      rule = convertLine(line, nextId);
+    } catch { skippedMalformed++; continue; }
+    if (!rule) { skippedUnsupported++; continue; }
+
     const key = rule.condition.urlFilter || rule.condition.regexFilter || "";
-    if (seen.has(key)) continue;
+    if (seen.has(key)) { skippedDuplicates++; continue; }
     seen.add(key);
 
     rules.push(rule);
@@ -132,6 +144,9 @@ function main() {
 
   fs.writeFileSync(output, JSON.stringify(rules, null, 2), "utf-8");
   console.log(`Converted ${lines.length} lines -> ${rules.length} DNR rules -> ${output}`);
+  if (skippedComments || skippedUnsupported || skippedMalformed || skippedDuplicates) {
+    console.log(`  Skipped: ${skippedComments} comments, ${skippedUnsupported} unsupported, ${skippedMalformed} malformed, ${skippedDuplicates} duplicates`);
+  }
 }
 
 main();

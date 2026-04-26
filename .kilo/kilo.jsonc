@@ -1,0 +1,68 @@
+{
+  "$schema": "https://app.kilo.ai/config.json",
+  "_description": "openShield — Chromium MV3 Gizlilik Uzantisi Kilo Code Yapilandirmasi",
+
+  "agent": {
+    "_description": "Proje icin ozellestirilmis ajan tanimlari",
+
+    "code": {
+      "model": "anthropic/claude-sonnet-4-20250514",
+      "temperature": 0.2,
+      "steps": 50
+    },
+    "architect": {
+      "model": "anthropic/claude-opus-4-1-20250805",
+      "temperature": 0.3,
+      "steps": 30
+    },
+    "debug": {
+      "model": "anthropic/claude-sonnet-4-20250514",
+      "temperature": 0.1,
+      "steps": 40
+    }
+  },
+
+  "permission": {
+    "_description": "MV3 tarayici uzantisi icin izinler. Manifest dosyasi, content script'ler ve DNR kurallari ana degisiklik alanlaridir.",
+    "read": "allow",
+    "edit": "ask",
+    "bash": {
+      "git *": "allow",
+      "node --test *": "allow",
+      "node tools/*": "allow",
+      "npm *": "ask",
+      "node *": "ask",
+      "*": "deny"
+    },
+    "glob": "allow",
+    "grep": "allow",
+    "list": "allow",
+    "task": "allow",
+    "webfetch": "ask",
+    "websearch": "ask",
+    "codesearch": "allow",
+    "todowrite": "allow",
+    "todoread": "allow"
+  },
+
+  "modelSettings": {
+    "_description": "Model davranis ayarlari",
+    "temperature": 0.3,
+    "maxTokens": 4000,
+    "topP": 0.9
+  },
+
+  "custom": {
+    "_description": "openShield proje metadatalari",
+    "projectName": "openShield",
+    "projectType": "browser-extension",
+    "primaryLanguage": "javascript",
+    "framework": "chromium-mv3",
+    "database": "chrome.storage.local + chrome.storage.session",
+    "testingFramework": "node:test (built-in)",
+    "lintCommand": "",
+    "testCommand": "node --test tests/unit/**/*.test.js",
+    "buildCommand": "node tools/build.js",
+    "documentationUrl": ""
+  }
+}

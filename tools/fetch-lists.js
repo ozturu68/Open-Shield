@@ -82,9 +82,15 @@ async function main() {
     try {
       const data = await fetch(list.url);
       fs.writeFileSync(out, data, "utf-8");
-      const lines = data.split(/\r?\n/).length;
-      const rules = data.split(/\r?\n/).filter(l => l.trim() && !l.startsWith("!")).length;
-      console.log(`  Saved ${lines} lines (${rules} rules) -> ${path.relative(ROOT, out)}`);
+      const lines = data.split(/\r?\n/);
+      const totalLines = lines.length;
+      const ruleLines = lines.filter(l => l.trim() && !l.startsWith("!") && !l.startsWith("["));
+      const malformed = ruleLines.filter(l => {
+        try {
+          return l.trim() && !l.startsWith("!") && !l.startsWith("[") && !l.includes("##") && l.length > 4096;
+        } catch { return true; }
+      }).length;
+      console.log(`  Saved ${totalLines} lines (${ruleLines.length} rules, ${malformed} malformed) -> ${path.relative(ROOT, out)}`);
     } catch (e) {
       console.error(`  Failed: ${e.message}`);
       if (fs.existsSync(out)) {

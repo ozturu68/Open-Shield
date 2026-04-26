@@ -1,0 +1,79 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint-test-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Validate manifest
+        run: node -e "
+          const fs = require('fs');
+          const manifest = JSON.parse(fs.readFileSync('manifest.json','utf-8'));
+          if (manifest.manifest_version !== 3) throw new Error('MV3 required');
+          if (!manifest.name) throw new Error('name required');
+          if (!manifest.version) throw new Error('version required');
+          if (!manifest.background?.service_worker) throw new Error('service_worker required');
+          console.log('Manifest OK');
+        "
+
+      - name: Validate rules
+        run: node -e "
+          const fs = require('fs');
+          const path = require('path');
+          const rulesDir = path.join('rules');
+          const files = fs.readdirSync(rulesDir).filter(f => f.endsWith('.json') && f !== 'bounce_domains.json');
+          let total = 0;
+          let ruleIds = new Set();
+          for (const file of files) {
+            const data = JSON.parse(fs.readFileSync(path.join(rulesDir, file), 'utf-8'));
+            if (!Array.isArray(data)) continue;
+            for (const rule of data) {
+              if (!rule.id || !rule.action || !rule.condition) throw new Error(file + ': missing fields in rule');
+              if (ruleIds.has(rule.id)) throw new Error(file + ': duplicate id ' + rule.id);
+              ruleIds.add(rule.id);
+              total++;
+            }
+          }
+          if (total > 30000) throw new Error('Static rule count ' + total + ' exceeds 30000 limit');
+          console.log('Rules OK: ' + total + ' static rules across ' + files.length + ' rulesets');
+        "
+
+      - name: Run unit tests
+        run: node --test tests/unit/**/*.test.js
+
+      - name: Check JSON syntax
+        run: |
+          for f in rules/*.json data/sources.json manifest.json; do
+            node -e "JSON.parse(require('fs').readFileSync('$f','utf-8'))" || exit 1
+          done
+          echo "All JSON valid"
+
+  security-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for eval / new Function
+        run: |
+          if grep -rn "eval(" src/ popup/ options/ --include="*.js"; then
+            echo "WARNING: eval() found in source"
+            exit 1
+          fi
+
+      - name: Check for unsafe innerHTML
+        run: |
+          if grep -rnP 'innerHTML\s*=\s*(?!\s*""\s*[;)])\S' popup/ options/ --include="*.js" --include="*.html"; then
+            echo "WARNING: unsafe innerHTML assignment found in UI code"
+            exit 1
+          fi

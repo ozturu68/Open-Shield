@@ -37,7 +37,7 @@
       "name": "AdGuard Base",
       "category": "ads",
       "url": "https://filters.adtidy.org/extension/chromium/filters/2.txt",
-      "enabled": false,
+      "enabled": true,
       "format": "abp"
     },
     {
@@ -45,7 +45,7 @@
       "name": "AdGuard Tracking Protection",
       "category": "trackers",
       "url": "https://filters.adtidy.org/extension/chromium/filters/3.txt",
-      "enabled": false,
+      "enabled": true,
       "format": "abp"
     }
   ],
