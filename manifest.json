@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
   "name": "openShield",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "minimum_chrome_version": "110",
-  "description": "Privacy shield for Chromium browsers. Blocks trackers, ads, fingerprinting, and WebRTC leaks silently.",
+  "description": "Privacy shield for Chromium browsers. Blocks trackers, ads, fingerprinting, link tracking, and WebRTC leaks silently.",
   "permissions": [
     "declarativeNetRequest",
     "declarativeNetRequestFeedback",
@@ -22,7 +22,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["src/cosmetic.js", "src/bounce.js"],
+      "js": ["src/cosmetic.js", "src/bounce.js", "src/link-protection.js", "src/click-to-load.js"],
       "run_at": "document_start",
       "world": "ISOLATED",
       "all_frames": true,

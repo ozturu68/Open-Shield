@@ -9,7 +9,7 @@
       }
     },
     "condition": {
-      "regexFilter": "^(https?://[^?#]*)\\?(?:utm_source|utm_medium|utm_campaign|utm_term|utm_content|fbclid|gclid|gclsrc|dclid|msclkid|yclid|mc_eid|mc_cid|_openstat|igshid|ref|source|affiliate_id|partner_id)=[^&]*(?:&(.*))?",
+      "regexFilter": "^(https?://[^?#]*)\\?(?:utm_source|utm_medium|utm_campaign|utm_term|utm_content|utm_id|fbclid|gclid|gclsrc|dclid|msclkid|yclid|twclid|mc_eid|mc_cid|_openstat|igshid|ref|source|sc_campaign|sc_channel|sc_content|sc_medium|sc_outcome|sc_geo|sc_country|affiliate_id|partner_id|trkCampaign|trkPartner|trkLink|oly_anon_id|oly_enc_id|oly_enc_ticket_id|_ga|_gl|ck_subscriber_id|hsCtaTracking|hsa_cam|hsa_grp|hsa_mt|hsa_src|hsa_ad|hsa_acc|hsa_net|hsa_ver|vero_id|vero_conv|wickedid|wicked_source|wt_mc|wt_zmc|wt_sr|wt_cd|si|sms_ss|sms_source|sms_clickid|sms_uph|mbid|mb_source|mb_campaign|mtm_campaign|mtm_source|mtm_medium|mtm_content|mtm_cid|mtm_group|mtm_placement|pk_campaign|pk_source|pk_medium|pk_content|pk_keyword|pk_cid|spm|scm|ws_ab_test|share_url_id|jwsource|jwexp|uid|subid|subid1|subid2|subid3|subid4|subid5|click_id|clickid|tracking_id|track_id|trk|trkref|cmpid|cmp|campaign_id|campid|cid|cust_id|customer_id|awtrc|atc|aa_campaign|aa_source|aa_medium|aa_content|igsh|ttclid|rdt_cid|SnapchatShareId|ocid|ncid|nr_email_referer|extlink|ob_marketer_id|ob_campaign_id|ob_ad_id|ob_click_id|ob_ad_group_id|ob_publisher_id|elqTrackId|elq_mid|elq_cid|elqTrack|elq|mkt_tok|mkt_unsubscribe|mkt_seg|mkt_chnl|conversion_id|conversion_type|conversion_source|cvo_campaign|cvo_adgroup|cvo_creative|cvo_pid|cvo_adid|cvo_sid|cvo_format|cvo_lineitem|wp_sc|wp_tc|wp_cp|wp_mkt|wp_ref|zanpid|zarsrc|rdt_cid|oly_enc_id|vero_id|vero_conv)=[^&]*(?:&(.*))?",
       "resourceTypes": ["main_frame", "sub_frame"]
     }
   },
@@ -23,7 +23,35 @@
       }
     },
     "condition": {
-      "regexFilter": "^(https?://[^?#]*)(.*)&(?:utm_source|utm_medium|utm_campaign|utm_term|utm_content|fbclid|gclid|gclsrc|dclid|msclkid|yclid|mc_eid|mc_cid|_openstat|igshid|ref|source|affiliate_id|partner_id)=[^&]*(?:&(.*))?",
+      "regexFilter": "^(https?://[^?#]*)(.*)&(?:utm_source|utm_medium|utm_campaign|utm_term|utm_content|utm_id|fbclid|gclid|gclsrc|dclid|msclkid|yclid|twclid|mc_eid|mc_cid|_openstat|igshid|ref|source|sc_campaign|sc_channel|sc_content|sc_medium|sc_outcome|sc_geo|sc_country|affiliate_id|partner_id|trkCampaign|trkPartner|trkLink|oly_anon_id|oly_enc_id|oly_enc_ticket_id|_ga|_gl|ck_subscriber_id|hsCtaTracking|hsa_cam|hsa_grp|hsa_mt|hsa_src|hsa_ad|hsa_acc|hsa_net|hsa_ver|vero_id|vero_conv|wickedid|wicked_source|wt_mc|wt_zmc|wt_sr|wt_cd|si|sms_ss|sms_source|sms_clickid|sms_uph|mbid|mb_source|mb_campaign|mtm_campaign|mtm_source|mtm_medium|mtm_content|mtm_cid|mtm_group|mtm_placement|pk_campaign|pk_source|pk_medium|pk_content|pk_keyword|pk_cid|spm|scm|ws_ab_test|share_url_id|jwsource|jwexp|uid|subid|subid1|subid2|subid3|subid4|subid5|click_id|clickid|tracking_id|track_id|trk|trkref|cmpid|cmp|campaign_id|campid|cid|cust_id|customer_id|awtrc|atc|aa_campaign|aa_source|aa_medium|aa_content|igsh|ttclid|rdt_cid|SnapchatShareId|ocid|ncid|nr_email_referer|extlink|ob_marketer_id|ob_campaign_id|ob_ad_id|ob_click_id|ob_ad_group_id|ob_publisher_id|elqTrackId|elq_mid|elq_cid|elqTrack|elq|mkt_tok|mkt_unsubscribe|mkt_seg|mkt_chnl|conversion_id|conversion_type|conversion_source|cvo_campaign|cvo_adgroup|cvo_creative|cvo_pid|cvo_adid|cvo_sid|cvo_format|cvo_lineitem|wp_sc|wp_tc|wp_cp|wp_mkt|wp_ref|zanpid|zarsrc|rdt_cid|oly_enc_id|vero_id|vero_conv)=[^&]*(?:&(.*))?",
+      "resourceTypes": ["main_frame", "sub_frame"]
+    }
+  },
+  {
+    "id": 3,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "regexSubstitution": "\\1?\\2"
+      }
+    },
+    "condition": {
+      "regexFilter": "^(https?://[^?#]*)\\?(?:ad_id|adgroup_id|adset_id|campaign_id|creative_id|placement_id|feeditemid|article_id|content_id|offer_id|product_id|variant_id|category_id|store_id|seller_id|merchant_id|aff_id|aff_sub|aff_sub2|aff_sub3|aff_sub4|aff_sub5|clickid|click_id|transaction_id|order_id|cart_id|session_id|visit_id|view_id|imp_id|impression_id|bid_id|bidid|request_id|auction_id|slot_id|unit_id|widget_id|module_id|page_id|post_id|tweet_id|status_id|pin_id|board_id|user_id|profile_id|actor_id|object_id|app_id|bundle_id|offer_id|sku|asin|ean|upc|isbn|mpn|custom_id|custid|uid|userid|u_id|s_id|z_id|sscid|promo_id|promo_code|deal_id|voucher_id|coupon_id|discount_id|bonus_id|loyalty_id|reward_id|invite_id|share_id|shortlink|short_url|hash|token|nonce|state|verifier|code|challenge|signature|sig|hmac|mac|checksum|hash|digest|etag|last_modified|if_modified_since|if_none_match|cache_buster|cache_id|version|revision|build|release|v|ver|ts|timestamp|t|dt|date|time|epoch|unix|ms|micros|nanos|seq|sequence|serial|attempt|retry|offset|page|start|from|to|since|until|after|before|min|max|limit|count|size|length|rows|cols|format|output|render|display|layout|theme|style|mode|view|tab|panel|section|step|stage|phase|level|tier|layer|zone|region|area|locale|lang|dir|sort|order|direction|by|group|filter|q|query|search|keyword|term|phrase|text|pattern|match|like|contains|tag|label|category|type|kind|class|genre|group|set|collection|bundle|pack|combo|kit|suite|family)=[^&]*(?:&(.*))?",
+      "resourceTypes": ["main_frame", "sub_frame"]
+    }
+  },
+  {
+    "id": 4,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "regexSubstitution": "\\1\\2\\3"
+      }
+    },
+    "condition": {
+      "regexFilter": "^(https?://[^?#]*)(.*)&(?:ad_id|adgroup_id|adset_id|campaign_id|creative_id|placement_id|feeditemid|article_id|content_id|offer_id|product_id|variant_id|category_id|store_id|seller_id|merchant_id|aff_id|aff_sub|aff_sub2|aff_sub3|aff_sub4|aff_sub5|clickid|click_id|transaction_id|order_id|cart_id|session_id|visit_id|view_id|imp_id|impression_id|bid_id|bidid|request_id|auction_id|slot_id|unit_id|widget_id|module_id|page_id|post_id|tweet_id|status_id|pin_id|board_id|user_id|profile_id|actor_id|object_id|app_id|bundle_id|offer_id|sku|asin|ean|upc|isbn|mpn|custom_id|custid|uid|userid|u_id|s_id|z_id|sscid|promo_id|promo_code|deal_id|voucher_id|coupon_id|discount_id|bonus_id|loyalty_id|reward_id|invite_id|share_id|shortlink|short_url|hash|token|nonce|state|verifier|code|challenge|signature|sig|hmac|mac|checksum|hash|digest|etag|last_modified|if_modified_since|if_none_match|cache_buster|cache_id|version|revision|build|release|v|ver|ts|timestamp|t|dt|date|time|epoch|unix|ms|micros|nanos|seq|sequence|serial|attempt|retry|offset|page|start|from|to|since|until|after|before|min|max|limit|count|size|length|rows|cols|format|output|render|display|layout|theme|style|mode|view|tab|panel|section|step|stage|phase|level|tier|layer|zone|region|area|locale|lang|dir|sort|order|direction|by|group|filter|q|query|search|keyword|term|phrase|text|pattern|match|like|contains|tag|label|category|type|kind|class|genre|group|set|collection|bundle|pack|combo|kit|suite|family)=[^&]*(?:&(.*))?",
       "resourceTypes": ["main_frame", "sub_frame"]
     }
   }

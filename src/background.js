@@ -216,7 +216,7 @@ async function effective(h) {
   const g = merge(DEFAULT_SETTINGS, s[KEY.GLOBAL] || {});
   const site = (s[KEY.SITES] || {})[h] || {};
   if (site.shields === false) {
-    return { ...g, shields: false, ads: "off", fp: false, https: false, cookies: "off", bounce: false, params: false, cosmetic: false };
+    return { ...g, shields: false, ads: "off", fp: false, https: false, cookies: "off", bounce: false, params: false, cosmetic: false, gpc: false, linkProtection: false, clickToLoad: false };
   }
   return merge(g, site);
 }
@@ -289,6 +289,24 @@ async function autoShred(tabId) {
   await chrome.storage.session.set({ [SESSION.ORIGINS]: a });
 }
 
+// ── Global Privacy Control (GPC) MAIN-world injection (self-contained) ──
+function installGPC() {
+  if (window.__osGPC) return;
+  window.__osGPC = true;
+  try {
+    Object.defineProperty(navigator, "globalPrivacyControl", {
+      get: function() { return true; },
+      configurable: true,
+      enumerable: true
+    });
+    Object.defineProperty(navigator, "doNotTrack", {
+      get: function() { return "1"; },
+      configurable: true,
+      enumerable: true
+    });
+  } catch {}
+}
+
 // ── Script injection orchestrator ──
 chrome.webNavigation.onCommitted.addListener(d => {
   if (d.frameId !== 0) return;
@@ -304,6 +322,11 @@ async function injectAll(tabId, h) {
 
   const shieldsActive = cfg.shields !== false;
   if (!shieldsActive) return;
+
+  // Global Privacy Control signal
+  if (cfg.gpc !== false) {
+    await chrome.scripting.executeScript({ target: { tabId }, world: "MAIN", func: installGPC, injectImmediately: true });
+  }
 
   // Farbling
   if (cfg.fp) {
@@ -563,8 +586,8 @@ chrome.alarms.onAlarm.addListener(alarm => {
 });
 
 // ── Message router ──
-const ALLOWED_SITE_KEYS = new Set(["shields", "ads", "fp", "fpLevel", "https", "cookies", "bounce", "params", "cosmetic", "shred"]);
-const ALLOWED_GLOBAL_KEYS = new Set(["ads", "fp", "fpLevel", "https", "cookies", "bounce", "params", "cosmetic", "shred"]);
+const ALLOWED_SITE_KEYS = new Set(["shields", "ads", "fp", "fpLevel", "https", "cookies", "bounce", "params", "cosmetic", "shred", "gpc", "linkProtection", "clickToLoad"]);
+const ALLOWED_GLOBAL_KEYS = new Set(["ads", "fp", "fpLevel", "https", "cookies", "bounce", "params", "cosmetic", "shred", "gpc", "linkProtection", "clickToLoad"]);
 
 function isValidHostname(h) {
   return typeof h === "string" && h.length > 0 && h.length < 256 && /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/.test(h);

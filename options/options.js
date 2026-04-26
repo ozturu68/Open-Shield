@@ -29,6 +29,9 @@
     $("g-fp-level").value = g.fpLevel || "medium";
     $("g-https").checked = !!g.https;
     $("g-shred").checked = !!g.shred;
+    $("g-gpc").checked = g.gpc !== false;
+    $("g-link-protection").checked = g.linkProtection !== false;
+    $("g-click-to-load").checked = g.clickToLoad !== false;
   }
 
   $("save-global").addEventListener("click", async () => {
@@ -38,7 +41,10 @@
       fp: $("g-fp").checked,
       fpLevel: $("g-fp-level").value,
       https: $("g-https").checked,
-      shred: $("g-shred").checked
+      shred: $("g-shred").checked,
+      gpc: $("g-gpc").checked,
+      linkProtection: $("g-link-protection").checked,
+      clickToLoad: $("g-click-to-load").checked
     };
     for (const [k, v] of Object.entries(settings)) await sendGlobal(k, v);
     $("saved-global").classList.remove("hidden");

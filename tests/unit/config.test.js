@@ -35,4 +35,31 @@ test("TRACKING_PARAMS contains known params", async () => {
   const { TRACKING_PARAMS } = await load();
   assert.ok(TRACKING_PARAMS.includes("utm_source"));
   assert.ok(TRACKING_PARAMS.includes("fbclid"));
+  assert.ok(TRACKING_PARAMS.includes("ttclid"));
+  assert.ok(TRACKING_PARAMS.includes("mtm_campaign"));
+  assert.ok(TRACKING_PARAMS.includes("pk_campaign"));
+});
+
+test("DEFAULT_SETTINGS includes new privacy features", async () => {
+  const { DEFAULT_SETTINGS } = await load();
+  assert.ok("gpc" in DEFAULT_SETTINGS);
+  assert.ok("linkProtection" in DEFAULT_SETTINGS);
+  assert.ok("clickToLoad" in DEFAULT_SETTINGS);
+});
+
+test("EMBED_DOMAINS exists and includes known platforms", async () => {
+  const { EMBED_DOMAINS } = await load();
+  assert.ok(Array.isArray(EMBED_DOMAINS));
+  assert.ok(EMBED_DOMAINS.length > 0);
+  assert.ok(EMBED_DOMAINS.some(d => d.includes("facebook.com")));
+  assert.ok(EMBED_DOMAINS.some(d => d.includes("youtube.com")));
+  assert.ok(EMBED_DOMAINS.some(d => d.includes("twitter.com")));
+});
+
+test("CLICK_TO_LOAD_TEXTS has entries for major platforms", async () => {
+  const { CLICK_TO_LOAD_TEXTS } = await load();
+  assert.ok("facebook" in CLICK_TO_LOAD_TEXTS);
+  assert.ok("youtube" in CLICK_TO_LOAD_TEXTS);
+  assert.ok("twitter" in CLICK_TO_LOAD_TEXTS);
+  assert.ok("default" in CLICK_TO_LOAD_TEXTS);
 });
