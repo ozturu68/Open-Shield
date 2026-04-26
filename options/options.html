@@ -43,9 +43,10 @@
       <div class="field">
         <label for="g-fp-level">Fingerprinting noise level</label>
         <select id="g-fp-level" class="input">
-          <option value="low">Low — minimal noise (best compatibility)</option>
+          <option value="low">Low — minimal noise</option>
           <option value="medium">Medium — balanced (default)</option>
-          <option value="high">High — aggressive (may break sites)</option>
+          <option value="high">High — aggressive</option>
+          <option value="strict">Strict — disable WebGL &amp; Canvas</option>
         </select>
       </div>
 
@@ -58,7 +59,9 @@
         <label for="g-shred">Auto Shred (clear site data on tab close)</label>
         <input type="checkbox" id="g-shred" class="toggle">
       </div>
+    </section>
 
+    <section>
       <h2>Privacy Signals</h2>
 
       <div class="field inline">
@@ -76,11 +79,53 @@
         <input type="checkbox" id="g-click-to-load" class="toggle">
       </div>
 
-      <div class="actions">
-        <button id="save-global" class="btn">Save changes</button>
-        <span id="saved-global" class="ok hidden">Saved</span>
+      <div class="field inline">
+        <label for="g-amp-protection">AMP protection (redirect to canonical)</label>
+        <input type="checkbox" id="g-amp-protection" class="toggle">
+      </div>
+
+      <div class="field inline">
+        <label for="g-xss-protection">XSS &amp; clickjacking detection</label>
+        <input type="checkbox" id="g-xss-protection" class="toggle">
       </div>
     </section>
+
+    <section>
+      <h2>Advanced Filtering</h2>
+
+      <div class="field inline">
+        <label for="g-dynamic-3p">Block all 3rd-party scripts (medium mode)</label>
+        <input type="checkbox" id="g-dynamic-3p" class="toggle">
+      </div>
+      <p class="hint">Blocks ALL third-party scripts and frames. Add exceptions via the popup per-site.</p>
+
+      <div class="field inline">
+        <label for="g-procedural">Procedural cosmetic filtering</label>
+        <input type="checkbox" id="g-procedural" class="toggle">
+      </div>
+      <p class="hint">Enables :has-text(), :xpath(), :upward() selectors for advanced ad hiding.</p>
+
+      <div class="field inline">
+        <label for="g-learning">Learning mode (auto-detect trackers)</label>
+        <input type="checkbox" id="g-learning" class="toggle">
+      </div>
+      <p class="hint">Observes 3rd-party behavior and auto-blocks trackers. Privacy Badger style — no external lists needed.</p>
+    </section>
+
+    <section>
+      <h2>Security</h2>
+
+      <div class="field inline">
+        <label for="g-secure-js">Selective JavaScript blocking (NoScript style)</label>
+        <input type="checkbox" id="g-secure-js" class="toggle">
+      </div>
+      <p class="hint">Per-site JS blocking toggle. Enable in popup for individual sites.</p>
+    </section>
+
+    <div class="actions" style="margin-bottom:16px">
+      <button id="save-global" class="btn">Save changes</button>
+      <span id="saved-global" class="ok hidden">Saved</span>
+    </div>
 
     <section>
       <h2>Filter Lists</h2>
@@ -91,8 +136,14 @@
     </section>
 
     <section>
+      <h2>Cohort Tracking Database</h2>
+      <p class="hint">Auto-detected cross-site trackers from your browsing (Privacy Badger style).</p>
+      <div id="cohort-stats" class="hint">Loading&hellip;</div>
+    </section>
+
+    <section>
       <h2>Exceptions</h2>
-      <p class="hint">One domain per line. Allowlist permanently disables shields. Blocklist always blocks.</p>
+      <p class="hint">One domain per line. Allowlist disables all shields. Blocklist always blocks.</p>
       <div class="field">
         <label for="allow">Allowlist</label>
         <textarea id="allow" class="input" rows="5" placeholder="example.com"></textarea>
@@ -109,8 +160,8 @@
 
     <section class="about">
       <h2>About</h2>
-      <p><strong>Version</strong> 1.0.0 &middot; <strong>License</strong> MIT</p>
-      <p class="hint">No telemetry. No cloud sync. All data stays on your device.</p>
+      <p><strong>Version</strong> 1.5.0 &middot; <strong>License</strong> MIT</p>
+      <p class="hint">No telemetry. No cloud sync. All data stays on your device. Firefox-compatible.</p>
     </section>
   </div>
   <script src="options.js"></script>

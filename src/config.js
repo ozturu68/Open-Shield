@@ -1,26 +1,34 @@
 /**
- * Minimal shared configuration. Zero dependencies.
+ * Shared configuration. Zero dependencies.
+ * openShield v1.5.0 — Four-phase enhancement complete.
  */
 
 export const DEFAULT_SETTINGS = {
-  ads: "standard",      // "standard" | "aggressive" | "off"
-  fp: true,             // fingerprinting protection
-  fpLevel: "medium",    // "low" | "medium" | "high"
-  https: true,          // https upgrade
+  ads: "standard",         // "standard" | "aggressive" | "off"
+  fp: true,                // fingerprinting protection
+  fpLevel: "medium",       // "low" | "medium" | "high" | "strict"
+  https: true,             // https upgrade
   cookies: "third-party",
   bounce: true,
   params: true,
   cosmetic: true,
   shred: false,
-  gpc: true,            // Global Privacy Control signal
-  linkProtection: true, // strip tracking params from links
-  clickToLoad: true     // social media embed blocking
+  gpc: true,               // Global Privacy Control signal
+  linkProtection: true,    // strip tracking params from links
+  clickToLoad: true,       // social media embed blocking
+  dynamic3p: false,        // uBlock medium mode: block all 3p scripts/frames
+  proceduralCosmetic: true,// :has-text(), :matches-css(), :xpath() filters
+  learningMode: true,      // Privacy Badger-style heuristic tracking detection
+  secureJS: false,         // NoScript-style selective JS blocking
+  xssProtection: true,     // reflected XSS + clickjacking detection
+  ampProtection: true      // redirect Google AMP to canonical
 };
 
 export const FP_NOISE_FACTORS = {
   low: 0.25,
   medium: 1,
-  high: 3
+  high: 3,
+  strict: Infinity  // special flag for complete WebGL/canvas disable
 };
 
 export const KEY = {
@@ -28,14 +36,19 @@ export const KEY = {
   SITES: "siteSettings",
   META: "filterMeta",
   ALLOW: "customAllowlist",
-  BLOCK: "customBlocklist"
+  BLOCK: "customBlocklist",
+  COHORT: "cohortDB",
+  LEARNING: "learningData",
+  JS_BLOCKED: "jsBlockedSites",
+  DYNAMIC_3P_ALLOW: "dynamic3pAllowlist"
 };
 
 export const SESSION = {
   COUNTERS: "tabCounters",
   SEEDS: "sessionSeeds",
   LOG: "blockLog",
-  ORIGINS: "tabOrigins"
+  ORIGINS: "tabOrigins",
+  LEARNING_SESSION: "learningSession"
 };
 
 export const MSG = {
@@ -43,13 +56,33 @@ export const MSG = {
   SET_SITE: "SET_SITE",
   SET_GLOBAL: "SET_GLOBAL",
   GET_LOG: "GET_LOG",
-  BOUNCE: "BOUNCE"
+  BOUNCE: "BOUNCE",
+  SET_DYNAMIC_3P: "SET_DYNAMIC_3P",
+  GET_COHORT_STATS: "GET_COHORT_STATS",
+  SECURITY_ALERT: "SECURITY_ALERT",
+  SECURITY_ALERT_DISMISSED: "SECURITY_ALERT_DISMISSED"
 };
 
 export const BOUNCE_DOMAINS = [
   "l.facebook.com","l.messenger.com","t.co","ow.ly",
   "bit.ly","tinyurl.com","buff.ly","rebrand.ly","short.link"
 ];
+
+// Privacy Badger-style: 3 domains threshold for auto-block
+export const COHORT_THRESHOLD = 3;
+
+// Learning mode scoring weights
+export const TRACKING_SCORES = {
+  thirdPartyCookie: 0.4,
+  canvasFingerprint: 0.9,
+  localStorage: 0.2,
+  beacon: 0.6,
+  navigatorProbe: 0.3,
+  webRTCEnum: 0.5,
+  fontEnum: 0.5
+};
+
+export const LEARNING_THRESHOLD = 1.2;
 
 export const TRACKING_PARAMS = [
   "utm_source","utm_medium","utm_campaign","utm_term","utm_content","utm_id",
@@ -118,3 +151,13 @@ export const CLICK_TO_LOAD_TEXTS = {
   snapchat: "Click to load Snapchat content",
   default: "Click to load embedded content"
 };
+
+export const AMP_CACHE_DOMAINS = [
+  "www.google.com/amp/","ampproject.org",
+  "amp.cloudflare.com","bing-amp.com"
+];
+
+export const PROCEDURAL_OPERATORS = [
+  "has-text","matches-css","xpath","upward","has","not",
+  "min-text-length","matches-attr","matches-path"
+];

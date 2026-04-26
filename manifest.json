@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "openShield",
-  "version": "1.1.0",
+  "version": "1.5.0",
   "minimum_chrome_version": "110",
   "description": "Privacy shield for Chromium browsers. Blocks trackers, ads, fingerprinting, link tracking, and WebRTC leaks silently.",
   "permissions": [
@@ -22,7 +22,7 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["src/cosmetic.js", "src/bounce.js", "src/link-protection.js", "src/click-to-load.js"],
+      "js": ["src/cosmetic.js", "src/bounce.js", "src/link-protection.js", "src/click-to-load.js", "src/security.js"],
       "run_at": "document_start",
       "world": "ISOLATED",
       "all_frames": true,
@@ -48,11 +48,21 @@
       { "id": "easyprivacy", "enabled": true, "path": "rules/easyprivacy.json" },
       { "id": "params", "enabled": true, "path": "rules/params.json" },
       { "id": "https_upgrade", "enabled": true, "path": "rules/https_upgrade.json" },
-      { "id": "headers", "enabled": true, "path": "rules/headers.json" }
+      { "id": "headers", "enabled": true, "path": "rules/headers.json" },
+      { "id": "3p-block", "enabled": false, "path": "rules/3p-block.json" }
     ]
   },
   "content_security_policy": {
     "extension_pages": "script-src 'self'; object-src 'self'"
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "openshield@privacy.extension",
+      "strict_min_version": "115.0"
+    },
+    "gecko_android": {
+      "strict_min_version": "115.0"
+    }
   },
   "icons": {
     "16": "icons/shield-on-16.png",

@@ -1,11 +1,11 @@
 /**
- * Options page logic — minimal, automatic.
+ * Options page logic — all four-phase features.
  */
 (() => {
   "use strict";
 
   const KEY = { GLOBAL: "globalSettings", META: "filterMeta", ALLOW: "customAllowlist", BLOCK: "customBlocklist" };
-  const MSG = { SET_GLOBAL: "SET_GLOBAL" };
+  const MSG = { SET_GLOBAL: "SET_GLOBAL", GET_COHORT_STATS: "GET_COHORT_STATS" };
 
   const $ = id => document.getElementById(id);
 
@@ -32,6 +32,12 @@
     $("g-gpc").checked = g.gpc !== false;
     $("g-link-protection").checked = g.linkProtection !== false;
     $("g-click-to-load").checked = g.clickToLoad !== false;
+    $("g-amp-protection").checked = g.ampProtection !== false;
+    $("g-xss-protection").checked = g.xssProtection !== false;
+    $("g-dynamic-3p").checked = !!g.dynamic3p;
+    $("g-procedural").checked = g.proceduralCosmetic !== false;
+    $("g-learning").checked = g.learningMode !== false;
+    $("g-secure-js").checked = !!g.secureJS;
   }
 
   $("save-global").addEventListener("click", async () => {
@@ -44,7 +50,13 @@
       shred: $("g-shred").checked,
       gpc: $("g-gpc").checked,
       linkProtection: $("g-link-protection").checked,
-      clickToLoad: $("g-click-to-load").checked
+      clickToLoad: $("g-click-to-load").checked,
+      ampProtection: $("g-amp-protection").checked,
+      xssProtection: $("g-xss-protection").checked,
+      dynamic3p: $("g-dynamic-3p").checked,
+      proceduralCosmetic: $("g-procedural").checked,
+      learningMode: $("g-learning").checked,
+      secureJS: $("g-secure-js").checked
     };
     for (const [k, v] of Object.entries(settings)) await sendGlobal(k, v);
     $("saved-global").classList.remove("hidden");
@@ -59,7 +71,8 @@
       { id: "easyprivacy", name: "EasyPrivacy (Trackers)" },
       { id: "params", name: "URL Parameter Stripping" },
       { id: "https_upgrade", name: "HTTPS Upgrade" },
-      { id: "headers", name: "Header Modifications" }
+      { id: "headers", name: "Header Modifications" },
+      { id: "3p-block", name: "3rd-Party Script/Frame Block" }
     ];
     const tbody = $("filter-body");
     tbody.innerHTML = "";
@@ -97,22 +110,34 @@
     const allow = $("allow").value.split("\n").map(s => s.trim().toLowerCase()).filter(s => s && domainRe.test(s));
     const block = $("block").value.split("\n").map(s => s.trim().toLowerCase()).filter(s => s && domainRe.test(s));
     await set({ [KEY.ALLOW]: allow, [KEY.BLOCK]: block });
-
     try {
       const existing = await chrome.declarativeNetRequest.getDynamicRules();
       const remove = existing.filter(r => r.id >= 150_000 && r.id < 200_000).map(r => r.id);
       const add = allow.map((domain, i) => ({
-        id: 150_000 + i, priority: 999, action: { type: "allow" },
+        id: 150_000 + i, priority: 2000, action: { type: "allow" },
         condition: { initiatorDomains: [domain], resourceTypes: ["main_frame","sub_frame","script","image","stylesheet","xmlhttprequest","media","font","other"] }
       }));
       await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: remove, addRules: add });
     } catch (e) { console.error(e); }
-
     $("saved-lists").classList.remove("hidden");
     setTimeout(() => $("saved-lists").classList.add("hidden"), 1500);
   });
 
+  async function loadCohortStats() {
+    try {
+      const resp = await new Promise((res) => chrome.runtime.sendMessage({ type: MSG.GET_COHORT_STATS }, r => res(r)));
+      if (resp?.stats?.length) {
+        $("cohort-stats").innerHTML = resp.stats.slice(0, 10).map(s =>
+          `<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>${s.domain}</span><span style="color:var(--muted)">${s.siteCount} sites ${s.autoBlocked ? '(auto-blocked)' : ''}</span></div>`
+        ).join("");
+      } else {
+        $("cohort-stats").textContent = "No cross-site trackers detected yet. Browse more sites to build the database.";
+      }
+    } catch { $("cohort-stats").textContent = "Stats unavailable."; }
+  }
+
   loadGlobal().catch(() => {});
   loadFilters().catch(() => {});
   loadLists().catch(() => {});
+  loadCohortStats().catch(() => {});
 })();

@@ -1,7 +1,6 @@
 /**
  * Unit tests for src/utils.js
  */
-
 const assert = require("node:assert");
 const test = require("node:test");
 
@@ -51,4 +50,40 @@ test("merge prevents prototype pollution", async () => {
   assert.strictEqual({}.polluted2, undefined);
   const r = merge({ a: 1, b: { c: 2 } }, { b: { d: 3 } });
   assert.deepStrictEqual(r, { a: 1, b: { c: 2, d: 3 } });
+});
+
+test("hashForId produces deterministic output", async () => {
+  const { hashForId } = await load();
+  const a = hashForId("example.com", 100000, 50000);
+  const b = hashForId("example.com", 100000, 50000);
+  assert.strictEqual(a, b);
+  assert.ok(a >= 100000 && a < 150000);
+});
+
+test("hashForId produces different output for different inputs", async () => {
+  const { hashForId } = await load();
+  const a = hashForId("example.com", 100000, 50000);
+  const b = hashForId("other.org", 100000, 50000);
+  assert.notStrictEqual(a, b);
+});
+
+test("extractDomain extracts from URLs", async () => {
+  const { extractDomain } = await load();
+  assert.strictEqual(extractDomain("https://example.com/path"), "example.com");
+  assert.strictEqual(extractDomain("example.com"), "example.com");
+  assert.strictEqual(extractDomain("sub.example.co.uk"), "sub.example.co.uk");
+});
+
+test("isAMP detects AMP pages", async () => {
+  const { isAMP } = await load();
+  assert.strictEqual(isAMP("https://www.google.com/amp/s/example.com"), true);
+  assert.strictEqual(isAMP("https://example-com.cdn.ampproject.org/c/example.com"), true);
+  assert.strictEqual(isAMP("https://example.com/normal"), false);
+});
+
+test("extractAMPCanonical extracts link tag", async () => {
+  const { extractAMPCanonical } = await load();
+  const html = '<html><head><link rel="canonical" href="https://example.com/page"></head><body></body></html>';
+  assert.strictEqual(extractAMPCanonical(html), "https://example.com/page");
+  assert.strictEqual(extractAMPCanonical("<html></html>"), null);
 });

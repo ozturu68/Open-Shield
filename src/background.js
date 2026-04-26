@@ -1,16 +1,19 @@
 /**
  * openShield Background Service Worker
- * Hardened, optimized, security-first architecture.
+ * v1.5.0 — Four-phase enhancement: dynamic 3P, procedural cosmetic,
+ * cohort tracking, learning mode, selective JS, AMP, Firefox support.
  */
-
-import { DEFAULT_SETTINGS, FP_NOISE_FACTORS, KEY, SESSION, MSG, BOUNCE_DOMAINS } from "./config.js";
-import { hostname, isBrowser, normHost, seed, merge } from "./utils.js";
+import { DEFAULT_SETTINGS, FP_NOISE_FACTORS, KEY, SESSION, MSG, BOUNCE_DOMAINS, COHORT_THRESHOLD, TRACKING_SCORES, LEARNING_THRESHOLD } from "./config.js";
+import { hostname, isBrowser, normHost, seed, merge, hashForId, extractDomain, isAMP, extractAMPCanonical } from "./utils.js";
 
 const ALLOW_BASE = 100_000;
+const JS_BLOCK_BASE = 200_000;
+const COHORT_DNR_START = 60_000;
 const LOG_MAX = 80;
 const DNR_STATIC_LIMIT = 30_000;
 const DNR_DYNAMIC_LIMIT = 5_000;
 const logCache = new Map();
+const cohortCache = new Map();
 
 const ALLOWED_HOSTS = new Set([
   "easylist.to", "easylist-downloads.adblockplus.org",
@@ -22,16 +25,22 @@ const ALLOWED_HOSTS = new Set([
 function installFarbling(seed, factor) {
   if (window.__osFarble) return;
   window.__osFarble = true;
-
+  // Strict mode: disable WebGL and canvas API entirely
+  if (factor === Infinity || factor > 100) {
+    HTMLCanvasElement.prototype.toDataURL = function() { return "data:image/png;base64,iVBORw0KGgo="; };
+    HTMLCanvasElement.prototype.toBlob = function(cb) { cb(new Blob([],{type:"image/png"})); };
+    CanvasRenderingContext2D.prototype.getImageData = function() { return new ImageData(1,1); };
+    CanvasRenderingContext2D.prototype.measureText = function() { return {width:0}; };
+    try { delete window.WebGLRenderingContext; delete window.WebGL2RenderingContext; } catch {}
+    return;
+  }
   const prng = (() => {
     let s = 0;
     for (let i = 0; i < seed.length; i++) s = (s * 31 + seed.charCodeAt(i)) >>> 0;
     return () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; return ((s >>> 0) / 4294967296); };
   })();
-
   const toStr = Function.prototype.toString;
   const wrapped = [];
-
   function wrap(proto, name, handler) {
     const d = Object.getOwnPropertyDescriptor(proto, name);
     if (!d || typeof d.value !== "function") return;
@@ -41,7 +50,6 @@ function installFarbling(seed, factor) {
     Object.defineProperty(proto, name, { value: fn, writable: true, enumerable: d.enumerable, configurable: true });
     wrapped.push(fn);
   }
-
   function noiseCanvas(b64, rng) {
     try {
       const pre = "data:image/png;base64,";
@@ -57,7 +65,6 @@ function installFarbling(seed, factor) {
       return pre + btoa(out);
     } catch { return b64; }
   }
-
   wrap(HTMLCanvasElement.prototype, "toDataURL", (o, t, a, rng) => noiseCanvas(o.apply(t, a), rng));
   wrap(HTMLCanvasElement.prototype, "toBlob", (o, t, a, rng) => {
     const cb = a[0];
@@ -79,20 +86,17 @@ function installFarbling(seed, factor) {
     if (r) r.width += (rng() - 0.5) * factor;
     return r;
   });
-
   const GL_SPOOF = { 37445: "WebKit", 37446: "WebKit WebGL" };
   [WebGLRenderingContext, WebGL2RenderingContext].forEach(P => {
     if (!P) return;
     wrap(P.prototype, "getParameter", (o, t, a) => GL_SPOOF[a[0]] ?? o.apply(t, a));
     wrap(P.prototype, "readPixels", (o, t, a, rng) => { o.apply(t, a); const p = a[6]; if (p?.length) { const mut = Math.max(1, p.length >> 12); for (let m = 0; m < mut; m++) p[rng() * p.length | 0] ^= 1; } });
   });
-
   wrap(AudioBuffer.prototype, "getChannelData", (o, t, a, rng) => {
     const d = o.apply(t, a);
     if (d?.length) for (let i = 0; i < d.length; i++) d[i] += (rng() - 0.5) * 0.0001 * factor;
     return d;
   });
-
   ["getFloatFrequencyData", "getByteFrequencyData"].forEach(n => {
     wrap(AnalyserNode.prototype, n, (o, t, a, rng) => {
       const r = o.apply(t, a);
@@ -101,18 +105,10 @@ function installFarbling(seed, factor) {
       return r;
     });
   });
-
-  // Font API farbling
   if (document.fonts?.check) {
     const origCheck = document.fonts.check.bind(document.fonts);
-    document.fonts.check = function(font, text) {
-      const r = origCheck(font, text);
-      // Always claim fonts are available to reduce font fingerprinting
-      return true;
-    };
+    document.fonts.check = function(font, text) { return true; };
   }
-
-  // toString deception
   Object.defineProperty(Function.prototype, "toString", {
     value: function toString() { return wrapped.includes(this) ? `function ${this.name}() { [native code] }` : toStr.call(this); },
     writable: true, configurable: true
@@ -125,7 +121,6 @@ function installWebRTCBlock() {
   window.__osWebRTC = true;
   const orig = window.RTCPeerConnection || window.webkitRTCPeerConnection || window.mozRTCPeerConnection;
   if (!orig) return;
-
   function isPrivateIPv4(ip) {
     if (!ip || ip.includes(":")) return false;
     const parts = ip.split(".");
@@ -135,19 +130,13 @@ function installWebRTCBlock() {
     if (b0 === 172 && b1 >= 16 && b1 <= 31) return true;
     if (b0 === 192 && b1 === 168) return true;
     if (b0 === 127) return true;
-    if (b0 === 0) return true;
-    return false;
+    return b0 === 0;
   }
-
   function isPrivateIPv6(ip) {
     if (!ip || !ip.includes(":")) return false;
     const lower = ip.toLowerCase();
-    if (lower.startsWith("fe80:")) return true;
-    if (lower.startsWith("fc") || lower.startsWith("fd")) return true;
-    if (lower === "::1" || lower.startsWith("::1%")) return true;
-    return false;
+    return lower.startsWith("fe80:") || lower.startsWith("fc") || lower.startsWith("fd") || lower === "::1" || lower.startsWith("::1%");
   }
-
   function Wrapped(...args) {
     const pc = new orig(...args);
     const origGetStats = pc.getStats.bind(pc);
@@ -200,11 +189,73 @@ function installBeaconBlock() {
   }
 }
 
+// ── Learning Mode Observer (self-contained for MAIN-world injection) ──
+function installLearningObserver() {
+  if (window.__osLearning) return;
+  window.__osLearning = true;
+  const signals = [];
+  // Intercept document.cookie setter
+  try {
+    const desc = Object.getOwnPropertyDescriptor(Document.prototype, "cookie") || Object.getOwnPropertyDescriptor(HTMLDocument.prototype, "cookie");
+    if (desc?.set) {
+      const origSet = desc.set;
+      Object.defineProperty(document, "cookie", {
+        get: desc.get,
+        set: function(v) { signals.push({ type: "thirdPartyCookie", t: Date.now() }); return origSet.call(this, v); },
+        configurable: true
+      });
+    }
+  } catch {}
+  // Intercept localStorage setItem
+  try {
+    const origSetItem = Storage.prototype.setItem;
+    Storage.prototype.setItem = function(k, v) {
+      signals.push({ type: "localStorage", t: Date.now() });
+      return origSetItem.call(this, k, v);
+    };
+  } catch {}
+  // Intercept navigator property access
+  const watchProps = ["userAgent","platform","language","hardwareConcurrency","deviceMemory","maxTouchPoints"];
+  watchProps.forEach(prop => {
+    try {
+      const desc = Object.getOwnPropertyDescriptor(Navigator.prototype, prop);
+      if (desc?.get) {
+        const origGet = desc.get;
+        Object.defineProperty(Navigator.prototype, prop, {
+          get: function() { signals.push({ type: "navigatorProbe", prop, t: Date.now() }); return origGet.call(this); },
+          configurable: true
+        });
+      }
+    } catch {}
+  });
+  // Periodically report signals
+  let lastReport = 0;
+  const origSetTimeout = window.setTimeout;
+  origSetTimeout(function report() {
+    if (signals.length > 0 && Date.now() - lastReport > 3000) {
+      lastReport = Date.now();
+      const batch = signals.splice(0, signals.length);
+      try { chrome?.runtime?.sendMessage({ type: "LEARNING_SIGNALS", signals: JSON.parse(JSON.stringify(batch)), url: location.href }).catch(() => {}); } catch {}
+    }
+    origSetTimeout(report, 2000);
+  }, 2000);
+}
+
+// ── GPC injection ──
+function installGPC() {
+  if (window.__osGPC) return;
+  window.__osGPC = true;
+  try {
+    Object.defineProperty(navigator, "globalPrivacyControl", { get: function() { return true; }, configurable: true, enumerable: true });
+    Object.defineProperty(navigator, "doNotTrack", { get: function() { return "1"; }, configurable: true, enumerable: true });
+  } catch {}
+}
+
 // ── Initialization ──
 async function initDefaults() {
-  const s = await chrome.storage.local.get([KEY.GLOBAL, KEY.SITES]);
+  const s = await chrome.storage.local.get([KEY.GLOBAL, KEY.SITES, KEY.COHORT, KEY.LEARNING, KEY.JS_BLOCKED]);
   const g = merge(DEFAULT_SETTINGS, s[KEY.GLOBAL] || {});
-  await chrome.storage.local.set({ [KEY.GLOBAL]: g, [KEY.SITES]: s[KEY.SITES] || {} });
+  await chrome.storage.local.set({ [KEY.GLOBAL]: g, [KEY.SITES]: s[KEY.SITES] || {}, [KEY.COHORT]: s[KEY.COHORT] || {}, [KEY.LEARNING]: s[KEY.LEARNING] || {}, [KEY.JS_BLOCKED]: s[KEY.JS_BLOCKED] || {} });
   setupFilterAlarm();
 }
 chrome.runtime.onInstalled.addListener(() => { initDefaults().catch(() => {}); runFilterUpdates().catch(() => {}); });
@@ -216,7 +267,7 @@ async function effective(h) {
   const g = merge(DEFAULT_SETTINGS, s[KEY.GLOBAL] || {});
   const site = (s[KEY.SITES] || {})[h] || {};
   if (site.shields === false) {
-    return { ...g, shields: false, ads: "off", fp: false, https: false, cookies: "off", bounce: false, params: false, cosmetic: false, gpc: false, linkProtection: false, clickToLoad: false };
+    return { ...g, shields: false, ads: "off", fp: false, https: false, cookies: "off", bounce: false, params: false, cosmetic: false, gpc: false, linkProtection: false, clickToLoad: false, dynamic3p: false, proceduralCosmetic: false, learningMode: false, secureJS: false, xssProtection: false, ampProtection: false };
   }
   return merge(g, site);
 }
@@ -224,15 +275,15 @@ async function effective(h) {
 // ── Counters ──
 async function counters(tabId) {
   const s = await chrome.storage.session.get(SESSION.COUNTERS);
-  return (s[SESSION.COUNTERS] || {})[tabId] || { blocked: 0, upgraded: 0, bounces: 0 };
+  return (s[SESSION.COUNTERS] || {})[tabId] || { blocked: 0, upgraded: 0, bounces: 0, jsBlocked: 0, cohortBlocked: 0 };
 }
 async function inc(tabId, field) {
   const s = await chrome.storage.session.get(SESSION.COUNTERS);
   const all = s[SESSION.COUNTERS] || {};
-  all[tabId] = all[tabId] || { blocked: 0, upgraded: 0, bounces: 0 };
+  all[tabId] = all[tabId] || { blocked: 0, upgraded: 0, bounces: 0, jsBlocked: 0, cohortBlocked: 0 };
   all[tabId][field] = (all[tabId][field] || 0) + 1;
   await chrome.storage.session.set({ [SESSION.COUNTERS]: all });
-  const t = all[tabId].blocked + all[tabId].upgraded;
+  const t = all[tabId].blocked + all[tabId].upgraded + (all[tabId].jsBlocked || 0) + (all[tabId].cohortBlocked || 0);
   chrome.action.setBadgeText({ tabId, text: t > 99 ? "99+" : t > 0 ? String(t) : "" }).catch(() => {});
   chrome.action.setBadgeBackgroundColor({ tabId, color: "#E07B00" }).catch(() => {});
 }
@@ -260,8 +311,8 @@ if (chrome.declarativeNetRequest?.onRuleMatchedDebug) {
     const tabId = info.tabId;
     if (!tabId || tabId < 0) return;
     const rs = info.rule?.rulesetId || "";
-    const cat = rs === "https_upgrade" ? "upgraded" : "blocked";
-    inc(tabId, cat).catch(() => {});
+    const cat = rs === "https_upgrade" ? "upgraded" : rs === "3p-block" ? "blocked" : "blocked";
+    inc(tabId, cat === "upgraded" ? "upgraded" : "blocked").catch(() => {});
     pushLog(tabId, { url: info.request?.url || "", ruleId: info.rule?.ruleId || 0, rs, t: Date.now() }).catch(() => {});
   });
 }
@@ -289,24 +340,6 @@ async function autoShred(tabId) {
   await chrome.storage.session.set({ [SESSION.ORIGINS]: a });
 }
 
-// ── Global Privacy Control (GPC) MAIN-world injection (self-contained) ──
-function installGPC() {
-  if (window.__osGPC) return;
-  window.__osGPC = true;
-  try {
-    Object.defineProperty(navigator, "globalPrivacyControl", {
-      get: function() { return true; },
-      configurable: true,
-      enumerable: true
-    });
-    Object.defineProperty(navigator, "doNotTrack", {
-      get: function() { return "1"; },
-      configurable: true,
-      enumerable: true
-    });
-  } catch {}
-}
-
 // ── Script injection orchestrator ──
 chrome.webNavigation.onCommitted.addListener(d => {
   if (d.frameId !== 0) return;
@@ -319,16 +352,11 @@ chrome.webNavigation.onCommitted.addListener(d => {
 async function injectAll(tabId, h) {
   if (!isValidHostname(h) || isBrowser(h)) return;
   const cfg = await effective(h);
+  if (cfg.shields === false) return;
 
-  const shieldsActive = cfg.shields !== false;
-  if (!shieldsActive) return;
-
-  // Global Privacy Control signal
   if (cfg.gpc !== false) {
-    await chrome.scripting.executeScript({ target: { tabId }, world: "MAIN", func: installGPC, injectImmediately: true });
+    chrome.scripting.executeScript({ target: { tabId }, world: "MAIN", func: installGPC, injectImmediately: true }).catch(() => {});
   }
-
-  // Farbling
   if (cfg.fp) {
     const s = await chrome.storage.session.get(SESSION.SEEDS);
     const seeds = s[SESSION.SEEDS] || {};
@@ -336,17 +364,14 @@ async function injectAll(tabId, h) {
     if (!sv) { sv = seed(); seeds[h] = sv; await chrome.storage.session.set({ [SESSION.SEEDS]: seeds }); }
     const fLevel = cfg.fpLevel || "medium";
     const factor = FP_NOISE_FACTORS[fLevel] || FP_NOISE_FACTORS.medium;
-    await chrome.scripting.executeScript({ target: { tabId }, world: "MAIN", func: installFarbling, args: [sv, factor], injectImmediately: true });
+    chrome.scripting.executeScript({ target: { tabId }, world: "MAIN", func: installFarbling, args: [sv, factor], injectImmediately: true }).catch(() => {});
   }
-
-  // WebRTC IP leak prevention
   if (cfg.fp) {
-    await chrome.scripting.executeScript({ target: { tabId }, world: "MAIN", func: installWebRTCBlock, injectImmediately: true });
+    chrome.scripting.executeScript({ target: { tabId }, world: "MAIN", func: installWebRTCBlock, injectImmediately: true }).catch(() => {});
+    chrome.scripting.executeScript({ target: { tabId }, world: "MAIN", func: installBeaconBlock, injectImmediately: true }).catch(() => {});
   }
-
-  // Beacon/ping blocking
-  if (cfg.fp) {
-    await chrome.scripting.executeScript({ target: { tabId }, world: "MAIN", func: installBeaconBlock, injectImmediately: true });
+  if (cfg.learningMode) {
+    chrome.scripting.executeScript({ target: { tabId }, world: "MAIN", func: installLearningObserver, injectImmediately: true }).catch(() => {});
   }
 }
 
@@ -370,17 +395,163 @@ chrome.webNavigation.onBeforeNavigate.addListener(d => {
   } catch {}
 });
 
+// ── AMP Protection (5.1) ──
+chrome.webNavigation.onCommitted.addListener(async d => {
+  if (d.frameId !== 0) return;
+  if (!isAMP(d.url)) return;
+  try {
+    const cfg = await effective(normHost(hostname(d.url)));
+    if (cfg.ampProtection === false) return;
+    chrome.scripting.executeScript({
+      target: { tabId: d.tabId },
+      world: "ISOLATED",
+      func: () => {
+        const link = document.querySelector('link[rel="canonical"]');
+        if (link?.href) chrome.runtime.sendMessage({ type: "AMP_REDIRECT", canonical: link.href }).catch(() => {});
+      },
+      injectImmediately: true
+    }).catch(() => {});
+  } catch {}
+});
+
 // ── Dynamic DNR ──
-function allowId(h) { let hash = 0; for (let i = 0; i < h.length; i++) hash = (hash * 31 + h.charCodeAt(i)) >>> 0; return ALLOW_BASE + (hash % 50_000); }
+function allowId(h) { return hashForId(h, ALLOW_BASE, 50_000); }
+function jsBlockId(h) { return hashForId(h, JS_BLOCK_BASE, 50_000); }
 
 async function setShields(h, on) {
   const id = allowId(h);
   if (on) {
     try { await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: [id] }); } catch {}
   } else {
-    const rule = { id, priority: 999, action: { type: "allow" }, condition: { initiatorDomains: [h], resourceTypes: ["main_frame","sub_frame","script","image","stylesheet","xmlhttprequest","media","font","other"] } };
+    const rule = { id, priority: 2000, action: { type: "allow" }, condition: { initiatorDomains: [h], resourceTypes: ["main_frame","sub_frame","script","image","stylesheet","xmlhttprequest","media","font","other"] } };
     try { await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: [id], addRules: [rule] }); } catch {}
   }
+}
+
+// ── Dynamic 3P Control (1.1) ──
+async function setDynamic3p(h, on) {
+  if (on) {
+    await chrome.declarativeNetRequest.updateEnabledRulesets({ enableRulesetIds: ["3p-block"] }).catch(() => {});
+  } else {
+    await chrome.declarativeNetRequest.updateEnabledRulesets({ disableRulesetIds: ["3p-block"] }).catch(() => {});
+  }
+  const s = await chrome.storage.local.get(KEY.SITES);
+  const sites = s[KEY.SITES] || {};
+  sites[h] = sites[h] || {};
+  sites[h].dynamic3p = on;
+  await chrome.storage.local.set({ [KEY.SITES]: sites });
+}
+
+// ── Selective JS Control (4.1) ──
+async function setJSBlocked(h, blocked) {
+  const id = jsBlockId(h);
+  if (blocked) {
+    const rule = { id, priority: 3000, action: { type: "block" }, condition: { initiatorDomains: [h], resourceTypes: ["script"] } };
+    try { await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: [id], addRules: [rule] }); } catch {}
+  } else {
+    try { await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: [id] }); } catch {}
+  }
+  const s = await chrome.storage.local.get(KEY.JS_BLOCKED);
+  const blockedSites = s[KEY.JS_BLOCKED] || {};
+  blockedSites[h] = blocked;
+  await chrome.storage.local.set({ [KEY.JS_BLOCKED]: blockedSites });
+}
+
+async function isJSBlocked(h) {
+  const s = await chrome.storage.local.get(KEY.JS_BLOCKED);
+  return (s[KEY.JS_BLOCKED] || {})[h] === true;
+}
+
+// ── Cohort Tracking DB (2.1) Privacy Badger style ──
+async function recordThirdParty(tabId, thirdPartyDomain) {
+  if (!thirdPartyDomain) return;
+  const tab = await chrome.tabs.get(tabId).catch(() => null);
+  if (!tab?.url) return;
+  const firstParty = normHost(hostname(tab.url));
+  if (!firstParty || firstParty === thirdPartyDomain) return;
+
+  const s = await chrome.storage.local.get(KEY.COHORT);
+  const db = s[KEY.COHORT] || {};
+  if (!db[thirdPartyDomain]) db[thirdPartyDomain] = { sites: {}, firstSeen: Date.now(), autoBlocked: false };
+  db[thirdPartyDomain].sites[firstParty] = Date.now();
+  db[thirdPartyDomain].lastSeen = Date.now();
+
+  const siteCount = Object.keys(db[thirdPartyDomain].sites).length;
+  if (siteCount >= COHORT_THRESHOLD && !db[thirdPartyDomain].autoBlocked) {
+    db[thirdPartyDomain].autoBlocked = true;
+    await chrome.storage.local.set({ [KEY.COHORT]: db });
+    await autoBlockCohort(thirdPartyDomain, tabId);
+  } else {
+    await chrome.storage.local.set({ [KEY.COHORT]: db });
+  }
+}
+
+async function autoBlockCohort(domain, tabId) {
+  const id = COHORT_DNR_START + (hashForId(domain, 0, 10_000));
+  const rule = { id, priority: 1, action: { type: "block" }, condition: { urlFilter: `||${domain}/`, resourceTypes: ["script","image","xmlhttprequest","sub_frame"] } };
+  try {
+    await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: [id], addRules: [rule] });
+    if (tabId) inc(tabId, "cohortBlocked").catch(() => {});
+  } catch {}
+}
+
+async function getCohortStats() {
+  const s = await chrome.storage.local.get(KEY.COHORT);
+  const db = s[KEY.COHORT] || {};
+  const entries = Object.entries(db).map(([domain, data]) => ({ domain, siteCount: Object.keys(data.sites).length, autoBlocked: !!data.autoBlocked, firstSeen: data.firstSeen }));
+  entries.sort((a, b) => b.siteCount - a.siteCount);
+  return entries.slice(0, 100);
+}
+
+// ── Cohort DB cleanup (every 24h) ──
+async function cleanupCohortDB() {
+  const s = await chrome.storage.local.get(KEY.COHORT);
+  const db = s[KEY.COHORT] || {};
+  const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000;
+  let cleaned = 0;
+  for (const domain of Object.keys(db)) {
+    if (db[domain].lastSeen < cutoff) { delete db[domain]; cleaned++; }
+  }
+  if (cleaned > 0) await chrome.storage.local.set({ [KEY.COHORT]: db });
+}
+chrome.alarms.create("cohortCleanup", { periodInMinutes: 1440 });
+chrome.alarms.onAlarm.addListener(alarm => {
+  if (alarm.name === "cohortCleanup") cleanupCohortDB().catch(() => {});
+  if (alarm.name === "filterUpdate") runFilterUpdates().catch(() => {});
+});
+
+// ── Learning Mode (2.2) ──
+async function handleLearningSignals(tabId, signals, url) {
+  if (!signals || !signals.length || !url) return;
+  try {
+    const thirdParty = hostname(url);
+    const tab = await chrome.tabs.get(tabId).catch(() => null);
+    if (!tab?.url) return;
+    const firstParty = normHost(hostname(tab.url));
+    if (!firstParty || firstParty === thirdParty) return;
+
+    let score = 0;
+    for (const sig of signals) {
+      score += TRACKING_SCORES[sig.type] || 0;
+    }
+    if (score >= LEARNING_THRESHOLD) {
+      const s = await chrome.storage.local.get(KEY.LEARNING);
+      const learning = s[KEY.LEARNING] || {};
+      if (!learning[thirdParty]) learning[thirdParty] = { scores: [], sites: new Set(), totalScore: 0 };
+      learning[thirdParty].scores = [...(learning[thirdParty].scores || []).slice(-9), score];
+      const sites = new Set(learning[thirdParty].sites || []);
+      sites.add(firstParty);
+      learning[thirdParty].sites = [...sites];
+      learning[thirdParty].totalScore = learning[thirdParty].scores.reduce((a, b) => a + b, 0) / learning[thirdParty].scores.length;
+      learning[thirdParty].sitesCount = sites.size;
+      await chrome.storage.local.set({ [KEY.LEARNING]: learning });
+
+      if (learning[thirdParty].totalScore >= 2 && sites.size >= 2) {
+        await autoBlockCohort(thirdParty, tabId);
+      }
+    }
+    await recordThirdParty(tabId, thirdParty);
+  } catch {}
 }
 
 // ── DNR Rule Limit Monitoring ──
@@ -390,7 +561,6 @@ async function checkDNRQuota() {
     const dynamics = await chrome.declarativeNetRequest.getDynamicRules();
     const staticCount = statics?.reduce((sum, rs) => sum + (rs.rulesCount || 0), 0) || 0;
     const dynamicCount = dynamics?.length || 0;
-
     if (staticCount > DNR_STATIC_LIMIT * 0.85) {
       console.warn(`[openShield] Static DNR rules at ${staticCount}/${DNR_STATIC_LIMIT} (${Math.round(staticCount / DNR_STATIC_LIMIT * 100)}%)`);
     }
@@ -401,7 +571,7 @@ async function checkDNRQuota() {
   } catch { return { staticCount: 0, dynamicCount: 0 }; }
 }
 
-// ── Auto-Update Filter Lists ──
+// ── Filter Updates (unchanged from original) ──
 const ALARM_FILTER_UPDATE = "filterUpdate";
 const FILTER_META_KEY = "filterMeta";
 const MAX_PER_LIST = 4000;
@@ -413,66 +583,35 @@ const FILTER_ID_RANGES = {
   "adguard-tracking": { start: 40_000, end: 49_999 }
 };
 
-function idRangeFor(sourceId) {
-  return FILTER_ID_RANGES[sourceId] || { start: 50_000, end: 59_999 };
-}
+function idRangeFor(sourceId) { return FILTER_ID_RANGES[sourceId] || { start: 50_000, end: 59_999 }; }
 
 function isValidSourceURL(url) {
-  try {
-    const u = new URL(url);
-    if (u.protocol !== "https:") return false;
-    return ALLOWED_HOSTS.has(u.hostname);
-  } catch { return false; }
+  try { const u = new URL(url); return u.protocol === "https:" && ALLOWED_HOSTS.has(u.hostname); } catch { return false; }
 }
 
 function abpLineToDNR(line, id) {
   line = line.trim();
   if (!line || line.startsWith("!") || line.startsWith("[")) return null;
   if (line.includes("##") || line.includes("#@#") || line.includes("#?#")) return null;
-
   const isException = line.startsWith("@@");
   if (isException) line = line.slice(2);
-
   const optIdx = line.lastIndexOf("$");
-  let rulePart = line;
-  let optStr = "";
-  if (optIdx > 0) {
-    rulePart = line.slice(0, optIdx);
-    optStr = line.slice(optIdx + 1);
-  }
-
+  let rulePart = line, optStr = "";
+  if (optIdx > 0) { rulePart = line.slice(0, optIdx); optStr = line.slice(optIdx + 1); }
   const opts = {};
-  if (optStr) {
-    optStr.split(",").forEach(p => {
-      const eq = p.indexOf("=");
-      opts[p.slice(0, eq === -1 ? p.length : eq).trim()] = eq === -1 ? true : p.slice(eq + 1).trim();
-    });
-  }
-
+  if (optStr) optStr.split(",").forEach(p => { const eq = p.indexOf("="); opts[p.slice(0, eq === -1 ? p.length : eq).trim()] = eq === -1 ? true : p.slice(eq + 1).trim(); });
   if (opts.csp || opts.redirect || opts.removeparam || opts.redirectrule) return null;
-
   const condition = {};
-
-  if (rulePart.startsWith("||")) {
-    condition.urlFilter = rulePart;
-  } else if (rulePart.startsWith("/") && rulePart.endsWith("/")) {
-    condition.regexFilter = rulePart.slice(1, -1);
-  } else if (rulePart.includes("*") || rulePart.includes("^")) {
-    condition.urlFilter = rulePart;
-  } else {
-    condition.urlFilter = rulePart;
-  }
-
+  if (rulePart.startsWith("||")) condition.urlFilter = rulePart;
+  else if (rulePart.startsWith("/") && rulePart.endsWith("/")) condition.regexFilter = rulePart.slice(1, -1);
+  else if (rulePart.includes("*") || rulePart.includes("^")) condition.urlFilter = rulePart;
+  else condition.urlFilter = rulePart;
   const typeMap = { script: "script", image: "image", stylesheet: "stylesheet", xmlhttprequest: "xmlhttprequest", font: "font", media: "media", subdocument: "sub_frame", websocket: "websocket", ping: "ping", other: "other", popup: "main_frame", document: "main_frame" };
   const types = [];
-  for (const [k, v] of Object.entries(typeMap)) {
-    if (opts[k]) types.push(v);
-  }
+  for (const [k, v] of Object.entries(typeMap)) { if (opts[k]) types.push(v); }
   if (types.length) condition.resourceTypes = types;
-
   if (opts["third-party"]) condition.domainType = "thirdParty";
   if (opts["first-party"]) condition.domainType = "firstParty";
-
   if (opts.domain) {
     const ds = opts.domain.split("|").map(d => d.trim());
     const incl = ds.filter(d => d && !d.startsWith("~"));
@@ -480,13 +619,10 @@ function abpLineToDNR(line, id) {
     if (incl.length) condition.initiatorDomains = incl;
     if (excl.length) condition.excludedInitiatorDomains = excl;
   }
-
   return { id, priority: isException ? 2 : 1, action: { type: isException ? "allow" : "block" }, condition };
 }
 
-function ruleKey(rule) {
-  return rule.condition.urlFilter || rule.condition.regexFilter || "";
-}
+function ruleKey(rule) { return rule.condition.urlFilter || rule.condition.regexFilter || ""; }
 
 async function refreshFilterList(source) {
   if (!isValidSourceURL(source.url)) return 0;
@@ -497,67 +633,34 @@ async function refreshFilterList(source) {
     const lines = text.split(/\r?\n/);
     const range = idRangeFor(source.id);
     let id = range.start;
-    const newRules = [];
-    const seen = new Set();
-
+    const newRules = [], seen = new Set();
     for (const line of lines) {
       if (newRules.length >= MAX_PER_LIST || id > range.end) break;
       const rule = abpLineToDNR(line, id);
       if (!rule) continue;
       const key = ruleKey(rule);
       if (!key || seen.has(key)) continue;
-      seen.add(key);
-      newRules.push(rule);
-      id++;
+      seen.add(key); newRules.push(rule); id++;
     }
-
     const storedMeta = await chrome.storage.local.get(FILTER_META_KEY);
     const meta = storedMeta[FILTER_META_KEY] || {};
     const prevIds = meta[source.id] || [];
-
-    // Diff: compute rules to add vs. remove
     const existingRules = await chrome.declarativeNetRequest.getDynamicRules();
-    const existingMap = new Map();
-    const existingIds = new Set();
-    for (const r of existingRules) {
-      const key = ruleKey(r);
-      if (key) existingMap.set(key, r.id);
-      if (prevIds.includes(r.id)) existingIds.add(r.id);
-    }
-
-    const toRemove = [];
-    const toAdd = [];
-
-    for (const prevId of prevIds) {
-      if (existingIds.has(prevId)) toRemove.push(prevId);
-    }
-
+    const existingMap = new Map(), existingIds = new Set();
+    for (const r of existingRules) { const key = ruleKey(r); if (key) existingMap.set(key, r.id); if (prevIds.includes(r.id)) existingIds.add(r.id); }
+    const toRemove = [], toAdd = [];
+    for (const prevId of prevIds) { if (existingIds.has(prevId)) toRemove.push(prevId); }
     const newKeys = new Set();
-    for (const rule of newRules) {
-      const key = ruleKey(rule);
-      newKeys.add(key);
-      if (!existingMap.has(key)) {
-        toAdd.push(rule);
-      }
-    }
-
+    for (const rule of newRules) { const key = ruleKey(rule); newKeys.add(key); if (!existingMap.has(key)) toAdd.push(rule); }
     if (toRemove.length > 0 || toAdd.length > 0) {
-      try {
-        await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: toRemove, addRules: toAdd });
-      } catch (e) {
-        console.warn(`[openShield] Dynamic rule update failed for ${source.name}:`, e.message);
-      }
+      try { await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: toRemove, addRules: toAdd }); }
+      catch (e) { console.warn(`[openShield] Dynamic rule update failed for ${source.name}:`, e.message); }
     }
-
     meta[source.id] = newRules.map(r => r.id);
     meta[`${source.id}_updated`] = Date.now();
     await chrome.storage.local.set({ [FILTER_META_KEY]: meta });
-
     return newRules.length;
-  } catch (e) {
-    console.warn(`[openShield] Filter refresh failed for ${source.name}:`, e.message);
-    return -1;
-  }
+  } catch (e) { console.warn(`[openShield] Filter refresh failed for ${source.name}:`, e.message); return -1; }
 }
 
 async function runFilterUpdates() {
@@ -567,27 +670,15 @@ async function runFilterUpdates() {
     { id: "adguard-base", name: "AdGuard Base", url: "https://filters.adtidy.org/extension/chromium/filters/2.txt" },
     { id: "adguard-tracking", name: "AdGuard Tracking", url: "https://filters.adtidy.org/extension/chromium/filters/3.txt" }
   ];
-
-  for (const source of sources) {
-    const result = await refreshFilterList(source);
-    if (result >= 0) console.log(`[openShield] Updated ${source.name}: ${result} rules`);
-  }
+  for (const source of sources) { const result = await refreshFilterList(source); if (result >= 0) console.log(`[openShield] Updated ${source.name}: ${result} rules`); }
   await checkDNRQuota();
 }
 
-function setupFilterAlarm() {
-  chrome.alarms.create(ALARM_FILTER_UPDATE, { periodInMinutes: 5760 });
-}
-
-chrome.alarms.onAlarm.addListener(alarm => {
-  if (alarm.name === ALARM_FILTER_UPDATE) {
-    runFilterUpdates().catch(() => {});
-  }
-});
+function setupFilterAlarm() { chrome.alarms.create(ALARM_FILTER_UPDATE, { periodInMinutes: 5760 }); }
 
 // ── Message router ──
-const ALLOWED_SITE_KEYS = new Set(["shields", "ads", "fp", "fpLevel", "https", "cookies", "bounce", "params", "cosmetic", "shred", "gpc", "linkProtection", "clickToLoad"]);
-const ALLOWED_GLOBAL_KEYS = new Set(["ads", "fp", "fpLevel", "https", "cookies", "bounce", "params", "cosmetic", "shred", "gpc", "linkProtection", "clickToLoad"]);
+const ALLOWED_SITE_KEYS = new Set(["shields", "ads", "fp", "fpLevel", "https", "cookies", "bounce", "params", "cosmetic", "shred", "gpc", "linkProtection", "clickToLoad", "dynamic3p", "proceduralCosmetic", "learningMode", "secureJS", "xssProtection", "ampProtection"]);
+const ALLOWED_GLOBAL_KEYS = new Set(["ads", "fp", "fpLevel", "https", "cookies", "bounce", "params", "cosmetic", "shred", "gpc", "linkProtection", "clickToLoad", "dynamic3p", "proceduralCosmetic", "learningMode", "secureJS", "xssProtection", "ampProtection"]);
 
 function isValidHostname(h) {
   return typeof h === "string" && h.length > 0 && h.length < 256 && /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/.test(h);
@@ -595,10 +686,7 @@ function isValidHostname(h) {
 
 function isValidDestination(dest) {
   if (typeof dest !== "string" || dest.length > 4096) return false;
-  try {
-    const u = new URL(dest);
-    return (u.protocol === "https:" || u.protocol === "http:") && u.hostname.length > 0;
-  } catch { return false; }
+  try { const u = new URL(dest); return (u.protocol === "https:" || u.protocol === "http:") && u.hostname.length > 0; } catch { return false; }
 }
 
 chrome.runtime.onMessage.addListener((msg, sender, reply) => {
@@ -609,7 +697,9 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
         const tab = await chrome.tabs.get(msg.tabId);
         const h = normHost(hostname(tab.url || ""));
         const cfg = h ? await effective(h) : { ...DEFAULT_SETTINGS };
-        reply({ h, cfg, counts: await counters(msg.tabId) });
+        const c = await counters(msg.tabId);
+        const jsBlocked = h ? await isJSBlocked(h) : false;
+        reply({ h, cfg, counts: c, jsBlocked });
         break;
       }
       case MSG.SET_SITE: {
@@ -619,6 +709,8 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
         sites[msg.h] = sites[msg.h] || {};
         sites[msg.h][msg.k] = msg.v;
         if (msg.k === "shields") await setShields(msg.h, msg.v !== false);
+        if (msg.k === "dynamic3p") await setDynamic3p(msg.h, msg.v !== false);
+        if (msg.k === "secureJS") await setJSBlocked(msg.h, msg.v !== false);
         await chrome.storage.local.set({ [KEY.SITES]: sites });
         reply({ ok: true });
         break;
@@ -633,9 +725,28 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
         break;
       }
       case MSG.GET_LOG: reply({ log: await getLog(msg.tabId) }); break;
+      case MSG.GET_COHORT_STATS: reply({ stats: await getCohortStats() }); break;
       case MSG.BOUNCE: {
         const tabId = sender.tab?.id;
         if (tabId && msg.dest && isValidDestination(msg.dest)) { await chrome.tabs.update(tabId, { url: msg.dest }); await inc(tabId, "bounces"); }
+        reply({ ok: true });
+        break;
+      }
+      case "AMP_REDIRECT": {
+        if (msg.canonical && isValidDestination(msg.canonical) && sender.tab?.id) {
+          await chrome.tabs.update(sender.tab.id, { url: msg.canonical });
+        }
+        reply({ ok: true });
+        break;
+      }
+      case "LEARNING_SIGNALS": {
+        const tabId = sender.tab?.id;
+        if (tabId) handleLearningSignals(tabId, msg.signals, msg.url).catch(() => {});
+        reply({ ok: true });
+        break;
+      }
+      case MSG.SECURITY_ALERT: {
+        if (sender.tab?.id) pushLog(sender.tab.id, { url: msg.url || "", ruleId: 0, rs: "security", t: Date.now(), alertType: msg.alertType }).catch(() => {});
         reply({ ok: true });
         break;
       }
