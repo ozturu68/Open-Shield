@@ -126,12 +126,23 @@
   async function loadCohortStats() {
     try {
       const resp = await new Promise((res) => chrome.runtime.sendMessage({ type: MSG.GET_COHORT_STATS }, r => res(r)));
+      const el = $("cohort-stats");
+      el.innerHTML = "";
       if (resp?.stats?.length) {
-        $("cohort-stats").innerHTML = resp.stats.slice(0, 10).map(s =>
-          `<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span>${s.domain}</span><span style="color:var(--muted)">${s.siteCount} sites ${s.autoBlocked ? '(auto-blocked)' : ''}</span></div>`
-        ).join("");
+        for (const s of resp.stats.slice(0, 10)) {
+          const row = document.createElement("div");
+          row.style.cssText = "display:flex;justify-content:space-between;margin-bottom:4px";
+          const domainSpan = document.createElement("span");
+          domainSpan.textContent = s.domain;
+          const infoSpan = document.createElement("span");
+          infoSpan.style.color = "var(--muted)";
+          infoSpan.textContent = s.siteCount + " sites" + (s.autoBlocked ? " (auto-blocked)" : "");
+          row.appendChild(domainSpan);
+          row.appendChild(infoSpan);
+          el.appendChild(row);
+        }
       } else {
-        $("cohort-stats").textContent = "No cross-site trackers detected yet. Browse more sites to build the database.";
+        el.textContent = "No cross-site trackers detected yet. Browse more sites to build the database.";
       }
     } catch { $("cohort-stats").textContent = "Stats unavailable."; }
   }

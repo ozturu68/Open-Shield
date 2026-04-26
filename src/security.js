@@ -78,7 +78,17 @@
       antiDebug: "This page may be using anti-debugging techniques."
     };
     banner.style.cssText = "position:fixed;top:0;left:0;right:0;z-index:2147483647;background:#d93025;color:#fff;padding:10px 16px;font-family:-apple-system,system-ui,sans-serif;font-size:13px;display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 2px 8px rgba(0,0,0,.3)";
-    banner.innerHTML = `<span><strong>openShield Warning:</strong> ${messages[type] || "Suspicious activity detected."}</span><button id="__osDismiss" style="background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:4px;padding:4px 12px;font-size:12px;cursor:pointer;white-space:nowrap">Dismiss</button>`;
+    const msgSpan = document.createElement("span");
+    const strong = document.createElement("strong");
+    strong.textContent = "openShield Warning: ";
+    msgSpan.appendChild(strong);
+    msgSpan.appendChild(document.createTextNode(messages[type] || "Suspicious activity detected."));
+    banner.appendChild(msgSpan);
+    const dismissBtn = document.createElement("button");
+    dismissBtn.id = "__osDismiss";
+    dismissBtn.style.cssText = "background:rgba(255,255,255,.2);color:#fff;border:1px solid rgba(255,255,255,.3);border-radius:4px;padding:4px 12px;font-size:12px;cursor:pointer;white-space:nowrap";
+    dismissBtn.textContent = "Dismiss";
+    banner.appendChild(dismissBtn);
     (document.body || document.documentElement).appendChild(banner);
     document.getElementById("__osDismiss").addEventListener("click", function() {
       banner.remove();
