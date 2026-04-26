@@ -85,8 +85,9 @@
   }
 
   $("save-lists").addEventListener("click", async () => {
-    const allow = $("allow").value.split("\n").map(s => s.trim()).filter(Boolean);
-    const block = $("block").value.split("\n").map(s => s.trim()).filter(Boolean);
+    const domainRe = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/i;
+    const allow = $("allow").value.split("\n").map(s => s.trim().toLowerCase()).filter(s => s && domainRe.test(s));
+    const block = $("block").value.split("\n").map(s => s.trim().toLowerCase()).filter(s => s && domainRe.test(s));
     await set({ [KEY.ALLOW]: allow, [KEY.BLOCK]: block });
 
     try {

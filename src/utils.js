@@ -15,7 +15,7 @@ export function normHost(h) {
 }
 
 export function seed() {
-  const a = new Uint8Array(4);
+  const a = new Uint8Array(16);
   crypto.getRandomValues(a);
   return Array.from(a, b => b.toString(16).padStart(2, "0")).join("");
 }
@@ -31,6 +31,8 @@ export function rand(seedStr, n = 0) {
 export function merge(base, over) {
   const r = { ...base };
   for (const k in over) {
+    if (!Object.prototype.hasOwnProperty.call(over, k)) continue;
+    if (k === "__proto__" || k === "constructor" || k === "prototype") continue;
     const v = over[k];
     r[k] = v !== null && typeof v === "object" && !Array.isArray(v)
       ? merge(base[k], v) : v;

@@ -25,11 +25,11 @@ test("normHost strips www", async () => {
   assert.strictEqual(normHost("www.Example.COM"), "example.com");
 });
 
-test("seed returns 8-char hex", async () => {
+test("seed returns 32-char hex", async () => {
   const { seed } = await load();
   const s = seed();
-  assert.strictEqual(s.length, 8);
-  assert.match(s, /^[0-9a-f]{8}$/);
+  assert.strictEqual(s.length, 32);
+  assert.match(s, /^[0-9a-f]{32}$/);
 });
 
 test("rand is deterministic", async () => {
@@ -42,8 +42,13 @@ test("rand is deterministic", async () => {
   assert.ok(a >= 0 && a < 1);
 });
 
-test("merge deep merges objects", async () => {
+test("merge prevents prototype pollution", async () => {
   const { merge } = await load();
+  const before = {}.polluted;
+  merge({ a: 1 }, { __proto__: { polluted: true } });
+  assert.strictEqual({}.polluted, before);
+  merge({ a: 1 }, { constructor: { prototype: { polluted2: true } } });
+  assert.strictEqual({}.polluted2, undefined);
   const r = merge({ a: 1, b: { c: 2 } }, { b: { d: 3 } });
   assert.deepStrictEqual(r, { a: 1, b: { c: 2, d: 3 } });
 });

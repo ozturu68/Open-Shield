@@ -7,7 +7,12 @@
   if (!DOMAINS.includes(location.hostname)) return;
   const p = new URLSearchParams(location.search);
   const d = p.get("u") || p.get("url") || p.get("next") || p.get("target");
-  if (d && /^https?:\/\//i.test(decodeURIComponent(d))) {
-    chrome.runtime.sendMessage({ type: "BOUNCE", dest: decodeURIComponent(d) });
+  if (d) {
+    let decoded;
+    try { decoded = decodeURIComponent(d); } catch { return; }
+    if (/^https?:\/\//i.test(decoded)) {
+      try { new URL(decoded); } catch { return; }
+      chrome.runtime.sendMessage({ type: "BOUNCE", dest: decoded });
+    }
   }
 })();

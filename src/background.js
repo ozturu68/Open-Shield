@@ -113,6 +113,29 @@ function installWebRTCBlock() {
   window.__osWebRTC = true;
   const orig = window.RTCPeerConnection || window.webkitRTCPeerConnection || window.mozRTCPeerConnection;
   if (!orig) return;
+
+  function isPrivateIPv4(ip) {
+    if (!ip || ip.includes(":")) return false;
+    const parts = ip.split(".");
+    if (parts.length !== 4) return false;
+    const b0 = parseInt(parts[0], 10), b1 = parseInt(parts[1], 10);
+    if (b0 === 10) return true;
+    if (b0 === 172 && b1 >= 16 && b1 <= 31) return true;
+    if (b0 === 192 && b1 === 168) return true;
+    if (b0 === 127) return true;
+    if (b0 === 0) return true;
+    return false;
+  }
+
+  function isPrivateIPv6(ip) {
+    if (!ip || !ip.includes(":")) return false;
+    const lower = ip.toLowerCase();
+    if (lower.startsWith("fe80:")) return true;
+    if (lower.startsWith("fc") || lower.startsWith("fd")) return true;
+    if (lower === "::1" || lower.startsWith("::1%")) return true;
+    return false;
+  }
+
   function Wrapped(...args) {
     const pc = new orig(...args);
     const origGetStats = pc.getStats.bind(pc);
@@ -122,7 +145,8 @@ function installWebRTCBlock() {
         report.forEach((stat, id) => {
           if (stat.type === "local-candidate" || stat.type === "remote-candidate") {
             const ip = stat.ip || stat.address;
-            if (ip && !ip.includes(":") && !ip.startsWith("192.168.") && !ip.startsWith("10.") && !ip.startsWith("172.")) filtered.set(id, stat);
+            if (ip && (isPrivateIPv4(ip) || isPrivateIPv6(ip))) return;
+            filtered.set(id, stat);
             return;
           }
           filtered.set(id, stat);
@@ -262,6 +286,7 @@ chrome.webNavigation.onCommitted.addListener(d => {
 });
 
 async function injectAll(tabId, h) {
+  if (!isValidHostname(h) || isBrowser(h)) return;
   const cfg = await effective(h);
 
   // Farbling
@@ -288,10 +313,15 @@ chrome.webNavigation.onBeforeNavigate.addListener(d => {
   try {
     const u = new URL(d.url);
     const dest = u.searchParams.get("u") || u.searchParams.get("url") || u.searchParams.get("next") || u.searchParams.get("target");
-    if (dest && /^https?:\/\//i.test(decodeURIComponent(dest))) {
-      chrome.tabs.update(d.tabId, { url: decodeURIComponent(dest) }).catch(() => {});
-      inc(d.tabId, "bounces").catch(() => {});
-    }
+    if (!dest) return;
+    let decoded;
+    try { decoded = decodeURIComponent(dest); } catch { return; }
+    if (!/^https?:\/\//i.test(decoded)) return;
+    const parsed = new URL(decoded);
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return;
+    if (parsed.hostname === h) return;
+    chrome.tabs.update(d.tabId, { url: decoded }).catch(() => {});
+    inc(d.tabId, "bounces").catch(() => {});
   } catch {}
 });
 
@@ -309,10 +339,26 @@ async function setShields(h, on) {
 }
 
 // ── Message router ──
+const ALLOWED_SITE_KEYS = new Set(["shields", "ads", "fp", "https", "cookies", "bounce", "params", "cosmetic", "shred"]);
+const ALLOWED_GLOBAL_KEYS = new Set(["ads", "fp", "https", "cookies", "bounce", "params", "cosmetic", "shred"]);
+
+function isValidHostname(h) {
+  return typeof h === "string" && h.length > 0 && h.length < 256 && /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/.test(h);
+}
+
+function isValidDestination(dest) {
+  if (typeof dest !== "string" || dest.length > 4096) return false;
+  try {
+    const u = new URL(dest);
+    return (u.protocol === "https:" || u.protocol === "http:") && u.hostname.length > 0;
+  } catch { return false; }
+}
+
 chrome.runtime.onMessage.addListener((msg, sender, reply) => {
   (async () => {
     switch (msg.type) {
       case MSG.GET_STATE: {
+        if (typeof msg.tabId !== "number") { reply({ error: "invalid tabId" }); return; }
         const tab = await chrome.tabs.get(msg.tabId);
         const h = normHost(hostname(tab.url || ""));
         const cfg = h ? await effective(h) : { ...DEFAULT_SETTINGS };
@@ -320,6 +366,7 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
         break;
       }
       case MSG.SET_SITE: {
+        if (!isValidHostname(msg.h) || !ALLOWED_SITE_KEYS.has(msg.k)) { reply({ error: "invalid parameters" }); return; }
         const s = await chrome.storage.local.get(KEY.SITES);
         const sites = s[KEY.SITES] || {};
         sites[msg.h] = sites[msg.h] || {};
@@ -330,6 +377,7 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
         break;
       }
       case MSG.SET_GLOBAL: {
+        if (!ALLOWED_GLOBAL_KEYS.has(msg.k)) { reply({ error: "invalid key" }); return; }
         const s = await chrome.storage.local.get(KEY.GLOBAL);
         const g = s[KEY.GLOBAL] || {};
         g[msg.k] = msg.v;
@@ -340,7 +388,7 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
       case MSG.GET_LOG: reply({ log: await getLog(msg.tabId) }); break;
       case MSG.BOUNCE: {
         const tabId = sender.tab?.id;
-        if (tabId && msg.dest) { await chrome.tabs.update(tabId, { url: msg.dest }); await inc(tabId, "bounces"); }
+        if (tabId && msg.dest && isValidDestination(msg.dest)) { await chrome.tabs.update(tabId, { url: msg.dest }); await inc(tabId, "bounces"); }
         reply({ ok: true });
         break;
       }

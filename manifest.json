@@ -2,6 +2,7 @@
   "manifest_version": 3,
   "name": "openShield",
   "version": "1.0.0",
+  "minimum_chrome_version": "110",
   "description": "Privacy shield for Chromium browsers. Blocks trackers, ads, fingerprinting, and WebRTC leaks silently.",
   "permissions": [
     "declarativeNetRequest",
