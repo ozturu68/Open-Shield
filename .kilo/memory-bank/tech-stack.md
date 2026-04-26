@@ -58,22 +58,25 @@ openShield **sifir runtime bagimlilik** prensibiyle gelistirilmistir. Tum kod sa
 
 ### 4.1. Statik Ruleset'ler
 
-| Ruleset ID | Dosya | Amac | Kural Sayisi (yaklasik) | Oncelik |
-|-----------|-------|------|----------------------|---------|
-| easylist | rules/easylist.json | Reklam domain engelleme | ~60 | 1 |
-| easyprivacy | rules/easyprivacy.json | Tracker/analytics engelleme | ~20 | 1 |
-| params | rules/params.json | URL tracking param temizleme | 2 | 1 |
-| https_upgrade | rules/https_upgrade.json | HTTP → HTTPS yonlendirme | ~10 | 1 |
-| headers | rules/headers.json | Header modifikasyonu (cookie, referer, DNT, GPC) | 6 | 1 |
+| Ruleset ID | Dosya | Amac | Kural Sayisi | Oncelik |
+|-----------|-------|------|-------------|---------|
+| easylist | rules/easylist.json | Reklam domain engelleme | 60 | 1 |
+| easyprivacy | rules/easyprivacy.json | Tracker/analytics engelleme | 20 | 1 |
+| params | rules/params.json | URL tracking param temizleme | 3 | 1 |
+| https_upgrade | rules/https_upgrade.json | HTTP → HTTPS yonlendirme | 10 | 1 |
+| headers | rules/headers.json | Header modifikasyonu (cookie, referer, DNT, GPC) | 25 | 1 |
+| 3p-block | rules/3p-block.json | 3rd-party script/frame block (disabled by default) | 2 | 1 |
 
-**Toplam statik kural:** ~100 (30.000 limite kadar genisletilebilir)
+**Toplam statik kural:** 120 (30.000 limite kadar genisletilebilir)
 
 ### 4.2. Dinamik Kurallar
 
 | ID Araligi | Amac | Yoneten |
 |-----------|------|---------|
 | 100000–149999 | Per-site shields toggle (allow kurali) | background.js `setShields()` |
-| 150000–199999 | Allowlist (kullanici tarafindan eklenen) | options.js `save-lists` |
+| 150000–199999 | Allowlist (kullanici tarafindan eklenen) | options.js `SET_ALLOWLIST` message |
+| 200000–249999 | JS blocking (selective) | background.js `setJSBlocked()` |
+| 300000–309999 | Cohort auto-block | background.js `autoBlockCohort()` |
 
 ---
 
@@ -87,6 +90,12 @@ openShield **sifir runtime bagimlilik** prensibiyle gelistirilmistir. Tum kod sa
 | src/utils.js | ES2022 | ESM | Service Worker |
 | src/cosmetic.js | ES2022, DOM API | IIFE | ISOLATED |
 | src/bounce.js | ES2022 | IIFE | ISOLATED |
+| src/link-protection.js | ES2022 | IIFE | ISOLATED |
+| src/click-to-load.js | ES2022 | IIFE | ISOLATED |
+| src/security.js | ES2022 | IIFE | ISOLATED |
+| src/webrtc.js | ES2022 | IIFE | MAIN-world (executeScript) |
+| src/beacon.js | ES2022 | IIFE | MAIN-world (executeScript) |
+| src/browser-polyfill.js | ES2022 | IIFE | Firefox compatibility |
 | popup/popup.js | ES2022 | IIFE (inline script) | Popup |
 | popup/popup.html | HTML5 | - | Popup |
 | popup/popup.css | CSS3 (custom properties) | - | Popup |

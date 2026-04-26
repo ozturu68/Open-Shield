@@ -79,6 +79,8 @@ In-memory Map'ler (`logCache`, `tabCounters`) her zaman:
 1 ... N                     Statik kurallar (ruleset bazinda)
 100000 ... 149999           Dinamik: per-site shields toggle
 150000 ... 199999           Dinamik: allowlist
+200000 ... 249999           Dinamik: JS blocking
+300000 ... 309999           Dinamik: cohort auto-block
 ```
 
 **YASAK:** Bu araliklarin disinda ID kullanmak. Collision olursa her iki kural da calismaz.

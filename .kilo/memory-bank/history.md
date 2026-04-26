@@ -1,6 +1,6 @@
 ---
-last_updated: 2026-04-26
-total_records: 4
+last_updated: 2026-04-27
+total_records: 5
 ---
 
 # History — openShield Karar Tarihcesi ve Ogrenilen Dersler
@@ -62,6 +62,23 @@ Bu dosya, openShield projesinin **gecmisinde alinan onemli kararlari, yasanan ha
 - **Kok Neden:** Hizli prototip gelistirme, build pipeline henuz tam entegre degil.
 - **Cozum:** Backlog'a eklendi. Onceliklendirme yapilacak.
 - **Onlem:** Build pipeline tamamlaninca filter listeler genisleyecek. Dead code temizligi yapilacak.
+
+---
+
+### 2026-04-27: Kritik Guvenlik ve Mimari Duzeltmeler
+
+- **Kategori:** Guvenlik + Mimari
+- **Durum:** Tamamlandi
+- **Duzeltmeler:**
+  1. `security.js`: `debugger` ifadesi kaldirildi, window dimension ile DevTools tespiti
+  2. `webrtc.js`: `isPrivateIPv4`/`isPrivateIPv6` fonksiyonlari eklendi (127.0.0.1, 0.0.0.0, IPv6 dahil)
+  3. `background.js`: DNR ID araligi duzeltildi — COHORT_DNR_START 60,000 → 300,000 (filtre listesi ile cakisma)
+  4. `background.js`: `cohortCache` dead code kaldirildi
+  5. `options.js`: DNR API'ye dogrudan erisim kaldirildi, message passing ile `SET_RULESET` ve `SET_ALLOWLIST` handler'lari eklendi
+  6. `cosmetic.js`: MutationObserver debounce (50ms setTimeout) ve `requestIdleCallback` fallback eklendi
+- **Gerekce:** Security audit sonrasi kritik bulgularin acil duzeltilmesi
+- **Kim:** AI assistant ile yapilan analiz sonrasi
+- **Etkisi:** Tum testler geciyor (75/75), build basarili
 
 ---
 

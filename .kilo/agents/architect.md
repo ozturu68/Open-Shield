@@ -61,12 +61,14 @@ Sen deneyimli bir **Tarayici Uzantisi Mimarisin.** Chromium Manifest V3, service
 - Ortak kod `utils.js` ve `config.js` ESM olarak yazilir, background/popup tarafindan import edilir
 
 ### 3. DNR Kural Stratejisi
-- **Statik kurallar:** `manifest.json`'da tanimli ruleset'ler (easylist, easyprivacy, params, https_upgrade, headers)
-- **Dinamik kurallar:** `chrome.declarativeNetRequest.updateDynamicRules` ile per-site toggle ve allowlist
+- **Statik kurallar:** `manifest.json`'da tanimli ruleset'ler (easylist, easyprivacy, params, https_upgrade, headers, 3p-block)
+- **Dinamik kurallar:** `chrome.declarativeNetRequest.updateDynamicRules` ile per-site toggle, JS blocking, allowlist, cohort
 - **ID araliklari:**
   - Statik: 1+ (ruleset bazinda artan, converter otomatik atar)
   - Dinamik toggle: 100000–149999 (site hostname hash tabanli)
   - Dinamik allowlist: 150000–199999 (options sayfasindan eklenen)
+  - Dinamik JS blocking: 200000–249999 (selective JS control)
+  - Dinamik cohort auto-block: 300000–309999 (Privacy Badger style)
 - Limit: 30.000 statik + 5.000 dinamik
 - Statik kural degisikligi extension guncellemesi gerektirir
 

@@ -12,8 +12,14 @@ openShield is a Chromium browser extension (Manifest V3) that provides privacy p
 │   ├── background.js          # Service worker (state, DNR, farbling injection)
 │   ├── cosmetic.js            # ISOLATED world CSS ad hiding (document_start)
 │   ├── bounce.js              # ISOLATED world bounce detection
+│   ├── link-protection.js     # ISOLATED world link tracking param stripping
+│   ├── click-to-load.js       # ISOLATED world social embed placeholders
+│   ├── security.js            # ISOLATED world XSS & clickjacking detection
+│   ├── webrtc.js              # MAIN-world WebRTC IP leak prevention
+│   ├── beacon.js              # MAIN-world beacon blocking
 │   ├── config.js              # Shared constants (ES module)
-│   └── utils.js               # Shared pure utilities (ES module)
+│   ├── utils.js               # Shared pure utilities (ES module)
+│   └── browser-polyfill.js    # Firefox compatibility shim
 ├── popup/
 │   ├── popup.html             # Popup markup
 │   ├── popup.js               # Popup logic
@@ -28,12 +34,15 @@ openShield is a Chromium browser extension (Manifest V3) that provides privacy p
 │   ├── params.json            # DNR rules (URL param stripping)
 │   ├── https_upgrade.json     # DNR rules (HTTPS upgrade)
 │   ├── headers.json           # DNR rules (header modifications)
+│   ├── 3p-block.json          # DNR rules (3rd-party script/frame block, disabled by default)
 │   └── bounce_domains.json    # Data file for bounce domains
 ├── icons/                     # PNG icons at 16/32/48/128 for on/off/partial
 ├── tools/
 │   ├── convert-filters.js     # ABP -> DNR converter
 │   ├── fetch-lists.js         # Downloads latest filter lists
-│   └── build.js               # Validates and packages extension
+│   ├── build.js               # Validates and packages extension
+│   ├── build-hsts.js          # HSTS rule builder
+│   └── extract-cosmetic.js   # Cosmetic filter extractor
 └── tests/
     └── unit/
         ├── config.test.js

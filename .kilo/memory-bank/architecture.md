@@ -106,6 +106,12 @@ Tum mesaj handler'lari input validasyonu yapar:
 
 ```
 Statik:    1...N per ruleset (manifest declared, incrementing)
+Dinamik:   100000 + (hostname_hash % 50000) — per-site shields toggle
+           150000 + i — allowlist entries
+           200000 + i — JS blocking rules
+           300000 + i — cohort auto-block
+```
+Statik:    1...N per ruleset (manifest declared, incrementing)
 Dinamik:   100000 + (hostname_hash % 50000) — per-site toggle
            150000 + i — allowlist entries
 ```
