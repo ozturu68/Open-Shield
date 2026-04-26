@@ -26,6 +26,7 @@
     $("g-ads").value = g.ads || "standard";
     $("g-cookies").value = g.cookies || "third-party";
     $("g-fp").checked = !!g.fp;
+    $("g-fp-level").value = g.fpLevel || "medium";
     $("g-https").checked = !!g.https;
     $("g-shred").checked = !!g.shred;
   }
@@ -35,6 +36,7 @@
       ads: $("g-ads").value,
       cookies: $("g-cookies").value,
       fp: $("g-fp").checked,
+      fpLevel: $("g-fp-level").value,
       https: $("g-https").checked,
       shred: $("g-shred").checked
     };

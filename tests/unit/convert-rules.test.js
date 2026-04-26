@@ -45,7 +45,7 @@ function convertLine(line, nextId) {
     condition.urlFilter = rulePart;
   }
 
-  const typeMap = { script: "script", image: "image", stylesheet: "stylesheet", xmlhttprequest: "xmlhttprequest", font: "font", media: "media", subdocument: "sub_frame", websocket: "websocket", ping: "ping", other: "other" };
+  const typeMap = { script: "script", image: "image", stylesheet: "stylesheet", xmlhttprequest: "xmlhttprequest", font: "font", media: "media", subdocument: "sub_frame", websocket: "websocket", ping: "ping", other: "other", popup: "main_frame", document: "main_frame" };
   const types = [];
   for (const [k, v] of Object.entries(typeMap)) {
     if (opts[k]) types.push(v);

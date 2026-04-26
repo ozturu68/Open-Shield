@@ -1,0 +1,63 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Validate manifest
+        run: node -e "
+          const fs = require('fs');
+          const m = JSON.parse(fs.readFileSync('manifest.json','utf-8'));
+          if (m.manifest_version !== 3) throw new Error('MV3 required');
+          if (!m.version) throw new Error('Version required');
+        "
+
+      - name: Validate rules
+        run: node -e "
+          const fs = require('fs'), path = require('path');
+          const dir = path.join('rules');
+          const files = fs.readdirSync(dir).filter(f => f.endsWith('.json') && f !== 'bounce_domains.json');
+          let ids = new Set(), total = 0;
+          for (const f of files) {
+            const rules = JSON.parse(fs.readFileSync(path.join(dir,f),'utf-8'));
+            if (!Array.isArray(rules)) continue;
+            for (const r of rules) {
+              if (!r.id || !r.action || !r.condition) throw new Error(f + ': invalid rule');
+              if (ids.has(r.id)) throw new Error(f + ': duplicate id ' + r.id);
+              ids.add(r.id); total++;
+            }
+          }
+          if (total > 30000) throw new Error('Rule count ' + total + ' exceeds 30K limit');
+          console.log('OK: ' + total + ' rules');
+        "
+
+      - name: Run tests
+        run: node --test tests/unit/**/*.test.js
+
+      - name: Build extension ZIP
+        run: node tools/build.js
+
+      - name: Get version from manifest
+        id: version
+        run: echo "VERSION=$(node -p "require('./manifest.json').version")" >> $GITHUB_OUTPUT
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: openShield-v${{ steps.version.outputs.VERSION }}.zip
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

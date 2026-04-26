@@ -381,7 +381,18 @@ async function checkDNRQuota() {
 // ── Auto-Update Filter Lists ──
 const ALARM_FILTER_UPDATE = "filterUpdate";
 const FILTER_META_KEY = "filterMeta";
-const DYNAMIC_FILTER_ID_RANGE = { start: 10_000, end: 99_999 };
+const MAX_PER_LIST = 4000;
+
+const FILTER_ID_RANGES = {
+  "ublock-filters":   { start: 10_000, end: 19_999 },
+  "ublock-privacy":   { start: 20_000, end: 29_999 },
+  "adguard-base":     { start: 30_000, end: 39_999 },
+  "adguard-tracking": { start: 40_000, end: 49_999 }
+};
+
+function idRangeFor(sourceId) {
+  return FILTER_ID_RANGES[sourceId] || { start: 50_000, end: 59_999 };
+}
 
 function isValidSourceURL(url) {
   try {
@@ -429,7 +440,7 @@ function abpLineToDNR(line, id) {
     condition.urlFilter = rulePart;
   }
 
-  const typeMap = { script: "script", image: "image", stylesheet: "stylesheet", xmlhttprequest: "xmlhttprequest", font: "font", media: "media", subdocument: "sub_frame", websocket: "websocket", ping: "ping", other: "other" };
+  const typeMap = { script: "script", image: "image", stylesheet: "stylesheet", xmlhttprequest: "xmlhttprequest", font: "font", media: "media", subdocument: "sub_frame", websocket: "websocket", ping: "ping", other: "other", popup: "main_frame", document: "main_frame" };
   const types = [];
   for (const [k, v] of Object.entries(typeMap)) {
     if (opts[k]) types.push(v);
@@ -450,6 +461,10 @@ function abpLineToDNR(line, id) {
   return { id, priority: isException ? 2 : 1, action: { type: isException ? "allow" : "block" }, condition };
 }
 
+function ruleKey(rule) {
+  return rule.condition.urlFilter || rule.condition.regexFilter || "";
+}
+
 async function refreshFilterList(source) {
   if (!isValidSourceURL(source.url)) return 0;
   try {
@@ -457,37 +472,65 @@ async function refreshFilterList(source) {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const text = await res.text();
     const lines = text.split(/\r?\n/);
-    const rules = [];
+    const range = idRangeFor(source.id);
+    let id = range.start;
+    const newRules = [];
     const seen = new Set();
-    let id = DYNAMIC_FILTER_ID_RANGE.start;
 
     for (const line of lines) {
-      if (rules.length >= 4000) break;
+      if (newRules.length >= MAX_PER_LIST || id > range.end) break;
       const rule = abpLineToDNR(line, id);
       if (!rule) continue;
-      const key = rule.condition.urlFilter || rule.condition.regexFilter || "";
+      const key = ruleKey(rule);
       if (!key || seen.has(key)) continue;
       seen.add(key);
-      rules.push(rule);
+      newRules.push(rule);
       id++;
     }
 
-    if (rules.length > 0) {
-      const storedRange = await chrome.storage.local.get(FILTER_META_KEY);
-      const meta = storedRange[FILTER_META_KEY] || {};
-      const oldIds = meta[source.id] || [];
+    const storedMeta = await chrome.storage.local.get(FILTER_META_KEY);
+    const meta = storedMeta[FILTER_META_KEY] || {};
+    const prevIds = meta[source.id] || [];
 
-      try { await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: oldIds }); } catch {}
-      try { await chrome.declarativeNetRequest.updateDynamicRules({ addRules: rules }); } catch (e) {
+    // Diff: compute rules to add vs. remove
+    const existingRules = await chrome.declarativeNetRequest.getDynamicRules();
+    const existingMap = new Map();
+    const existingIds = new Set();
+    for (const r of existingRules) {
+      const key = ruleKey(r);
+      if (key) existingMap.set(key, r.id);
+      if (prevIds.includes(r.id)) existingIds.add(r.id);
+    }
+
+    const toRemove = [];
+    const toAdd = [];
+
+    for (const prevId of prevIds) {
+      if (existingIds.has(prevId)) toRemove.push(prevId);
+    }
+
+    const newKeys = new Set();
+    for (const rule of newRules) {
+      const key = ruleKey(rule);
+      newKeys.add(key);
+      if (!existingMap.has(key)) {
+        toAdd.push(rule);
+      }
+    }
+
+    if (toRemove.length > 0 || toAdd.length > 0) {
+      try {
+        await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: toRemove, addRules: toAdd });
+      } catch (e) {
         console.warn(`[openShield] Dynamic rule update failed for ${source.name}:`, e.message);
       }
-
-      const newIds = rules.map(r => r.id);
-      meta[source.id] = newIds;
-      meta[`${source.id}_updated`] = Date.now();
-      await chrome.storage.local.set({ [FILTER_META_KEY]: meta });
     }
-    return rules.length;
+
+    meta[source.id] = newRules.map(r => r.id);
+    meta[`${source.id}_updated`] = Date.now();
+    await chrome.storage.local.set({ [FILTER_META_KEY]: meta });
+
+    return newRules.length;
   } catch (e) {
     console.warn(`[openShield] Filter refresh failed for ${source.name}:`, e.message);
     return -1;
