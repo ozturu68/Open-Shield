@@ -105,7 +105,10 @@
   }
 
   // ── Run ──
+  let runCalled = false;
   function run() {
+    if (runCalled) return;
+    runCalled = true;
     injectStyle();
 
     // Check clickjacking
@@ -119,6 +122,6 @@
   if (document.readyState !== "loading") {
     setTimeout(run, 100);
   } else {
-    document.addEventListener("DOMContentLoaded", function() { setTimeout(run, 200); });
+    document.addEventListener("DOMContentLoaded", function() { setTimeout(run, 200); }, { once: true });
   }
 })();

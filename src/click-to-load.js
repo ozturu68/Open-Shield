@@ -73,7 +73,17 @@
     const btn = document.createElement("button");
     btn.className = "__osCtlBtn";
     const svgSpan = document.createElement("span");
-    svgSpan.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>';
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("fill", "none");
+    svg.setAttribute("stroke", "currentColor");
+    svg.setAttribute("stroke-width", "2.5");
+    svg.setAttribute("stroke-linecap", "round");
+    svg.setAttribute("stroke-linejoin", "round");
+    const polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+    polygon.setAttribute("points", "5 3 19 12 5 21 5 3");
+    svg.appendChild(polygon);
+    svgSpan.appendChild(svg);
     btn.appendChild(svgSpan);
     btn.appendChild(document.createTextNode(" Click to load " + getServiceName(originalSrc)));
     overlay.appendChild(btn);

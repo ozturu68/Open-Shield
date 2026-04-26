@@ -22,9 +22,10 @@
 
     <div id="main">
       <div class="site-row">
-        <div>
+        <div class="site-info">
           <div id="hostname" class="hostname">example.com</div>
           <div id="status-text" class="status-text">Shields are up</div>
+          <div id="status-desc" class="status-desc"></div>
         </div>
         <label class="switch">
           <input type="checkbox" id="master" checked>
@@ -33,18 +34,25 @@
       </div>
 
       <div class="stats">
-        <div><strong id="c-blocked">0</strong><span>Blocked</span></div>
-        <div><strong id="c-upgraded">0</strong><span>Upgraded</span></div>
-        <div><strong id="c-bounces">0</strong><span>Bounces</span></div>
+        <div class="stat-item"><strong id="c-blocked">0</strong><span>Blocked</span></div>
+        <div class="stat-item"><strong id="c-upgraded">0</strong><span>Upgraded</span></div>
+        <div class="stat-item"><strong id="c-bounces">0</strong><span>Bounces</span></div>
+      </div>
+
+      <div id="protection-badges" class="badges">
+        <span id="badge-ads" class="badge badge-on">Ads</span>
+        <span id="badge-fp" class="badge badge-on">Fingerprint</span>
+        <span id="badge-params" class="badge badge-on">Params</span>
+        <span id="badge-cookies" class="badge badge-on">Cookies</span>
       </div>
 
       <div class="controls">
         <div class="row">
-          <span>Block 3rd-party scripts</span>
+          <span class="control-label">Block 3rd-party scripts</span>
           <label class="switch small"><input type="checkbox" id="toggle-3p"><span class="track"></span></label>
         </div>
         <div class="row">
-          <span>Disable JavaScript</span>
+          <span class="control-label">Disable JavaScript</span>
           <label class="switch small"><input type="checkbox" id="toggle-js"><span class="track"></span></label>
         </div>
       </div>

@@ -1,5 +1,5 @@
 /**
- * Popup logic — with dynamic 3P control and JS blocking toggles.
+ * Popup logic — enhanced with protection badges and detailed status.
  */
 (async () => {
   "use strict";
@@ -17,6 +17,30 @@
   function norm(h) { return (h || "").replace(/^www\./, "").toLowerCase(); }
 
   let tabId, hostname = "";
+
+  function updateBadges(cfg) {
+    const adsOn = cfg.ads !== "off";
+    const fpOn = cfg.fp !== false;
+    const paramsOn = cfg.params !== false;
+    const cookiesOn = cfg.cookies !== "off";
+
+    $("badge-ads").className = "badge " + (adsOn ? "badge-on" : "badge-off");
+    $("badge-ads").textContent = "Ads";
+    $("badge-fp").className = "badge " + (fpOn ? "badge-on" : "badge-off");
+    $("badge-fp").textContent = "FP";
+    $("badge-params").className = "badge " + (paramsOn ? "badge-on" : "badge-off");
+    $("badge-params").textContent = "Params";
+    $("badge-cookies").className = "badge " + (cookiesOn ? "badge-on" : "badge-off");
+    $("badge-cookies").textContent = "Cookies";
+  }
+
+  function getStatusDescription(cfg, counts) {
+    const total = (counts?.blocked || 0) + (counts?.cohortBlocked || 0);
+    if (cfg.shields === false) return "All protections disabled for this site";
+    if (total === 0) return "No threats detected";
+    if (total < 10) return `${total} threats blocked`;
+    return `${total}+ threats blocked`;
+  }
 
   async function init() {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -43,10 +67,11 @@
     $("master").checked = on;
     $("status-text").textContent = on ? "Shields are up" : "Shields are down";
     $("status-text").classList.toggle("off", !on);
+    $("status-desc").textContent = getStatusDescription(cfg, state.counts);
 
-    // Dynamic 3P control toggle
+    updateBadges(cfg);
+
     $("toggle-3p").checked = cfg.dynamic3p === true;
-    // JS blocking toggle
     $("toggle-js").checked = state.jsBlocked === true;
   }
 
@@ -55,6 +80,12 @@
     $("status-text").textContent = on ? "Shields are up" : "Shields are down";
     $("status-text").classList.toggle("off", !on);
     await send(MSG.SET_SITE, { h: hostname, k: "shields", v: on });
+
+    const state = await send(MSG.GET_STATE, { tabId });
+    const cfg = state.cfg || {};
+    $("status-desc").textContent = getStatusDescription(cfg, state.counts);
+    updateBadges(cfg);
+
     $("reload").classList.remove("hidden");
   });
 

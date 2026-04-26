@@ -13,6 +13,7 @@ const LOG_MAX = 80;
 const DNR_STATIC_LIMIT = 30_000;
 const DNR_DYNAMIC_LIMIT = 5_000;
 const logCache = new Map();
+const tabCountersCache = new Map();
 
 const ALLOWED_HOSTS = new Set([
   "easylist.to", "easylist-downloads.adblockplus.org",
@@ -273,16 +274,26 @@ async function effective(h) {
 
 // ── Counters ──
 async function counters(tabId) {
+  const cached = tabCountersCache.get(tabId);
+  if (cached) return cached;
   const s = await chrome.storage.session.get(SESSION.COUNTERS);
-  return (s[SESSION.COUNTERS] || {})[tabId] || { blocked: 0, upgraded: 0, bounces: 0, jsBlocked: 0, cohortBlocked: 0 };
+  const c = (s[SESSION.COUNTERS] || {})[tabId] || { blocked: 0, upgraded: 0, bounces: 0, jsBlocked: 0, cohortBlocked: 0 };
+  tabCountersCache.set(tabId, c);
+  return c;
 }
 async function inc(tabId, field) {
-  const s = await chrome.storage.session.get(SESSION.COUNTERS);
-  const all = s[SESSION.COUNTERS] || {};
-  all[tabId] = all[tabId] || { blocked: 0, upgraded: 0, bounces: 0, jsBlocked: 0, cohortBlocked: 0 };
-  all[tabId][field] = (all[tabId][field] || 0) + 1;
+  if (!field) return;
+  let c = tabCountersCache.get(tabId);
+  if (!c) {
+    const s = await chrome.storage.session.get(SESSION.COUNTERS);
+    c = (s[SESSION.COUNTERS] || {})[tabId] || { blocked: 0, upgraded: 0, bounces: 0, jsBlocked: 0, cohortBlocked: 0 };
+  }
+  c[field] = (c[field] || 0) + 1;
+  tabCountersCache.set(tabId, c);
+  const all = (await chrome.storage.session.get(SESSION.COUNTERS))[SESSION.COUNTERS] || {};
+  all[tabId] = c;
   await chrome.storage.session.set({ [SESSION.COUNTERS]: all });
-  const t = all[tabId].blocked + all[tabId].upgraded + (all[tabId].jsBlocked || 0) + (all[tabId].cohortBlocked || 0);
+  const t = c.blocked + c.upgraded + (c.jsBlocked || 0) + (c.cohortBlocked || 0);
   chrome.action.setBadgeText({ tabId, text: t > 99 ? "99+" : t > 0 ? String(t) : "" }).catch(() => {});
   chrome.action.setBadgeBackgroundColor({ tabId, color: "#E07B00" }).catch(() => {});
 }
@@ -317,7 +328,7 @@ if (chrome.declarativeNetRequest?.onRuleMatchedDebug) {
 }
 
 // ── Tab lifecycle ──
-chrome.tabs.onRemoved.addListener(tabId => { autoShred(tabId).catch(() => {}); logCache.delete(tabId); });
+chrome.tabs.onRemoved.addListener(tabId => { autoShred(tabId).catch(() => {}); logCache.delete(tabId); tabCountersCache.delete(tabId); });
 chrome.tabs.onUpdated.addListener((tabId, ch, tab) => {
   if (ch.url && tab.url) {
     try {
@@ -416,14 +427,17 @@ chrome.webNavigation.onCommitted.addListener(async d => {
 // ── Dynamic DNR ──
 function allowId(h) { return hashForId(h, ALLOW_BASE, 50_000); }
 function jsBlockId(h) { return hashForId(h, JS_BLOCK_BASE, 50_000); }
+function cohortId(domain) { return COHORT_DNR_START + (hashForId(domain, 0, 10_000) % 10_000); }
 
 async function setShields(h, on) {
   const id = allowId(h);
+  const jsId = jsBlockId(h);
+  const toRemove = [id, jsId];
   if (on) {
-    try { await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: [id] }); } catch {}
+    try { await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: toRemove }); } catch {}
   } else {
     const rule = { id, priority: 2000, action: { type: "allow" }, condition: { initiatorDomains: [h], resourceTypes: ["main_frame","sub_frame","script","image","stylesheet","xmlhttprequest","media","font","other"] } };
-    try { await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: [id], addRules: [rule] }); } catch {}
+    try { await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: toRemove, addRules: [rule] }); } catch {}
   }
 }
 
@@ -486,7 +500,7 @@ async function recordThirdParty(tabId, thirdPartyDomain) {
 }
 
 async function autoBlockCohort(domain, tabId) {
-  const id = COHORT_DNR_START + (hashForId(domain, 0, 10_000));
+  const id = cohortId(domain);
   const rule = { id, priority: 1, action: { type: "block" }, condition: { urlFilter: `||${domain}/`, resourceTypes: ["script","image","xmlhttprequest","sub_frame"] } };
   try {
     await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: [id], addRules: [rule] });

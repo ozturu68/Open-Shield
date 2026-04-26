@@ -1,6 +1,6 @@
 ---
 last_updated: 2026-04-27
-total_records: 5
+total_records: 6
 ---
 
 # History — openShield Karar Tarihcesi ve Ogrenilen Dersler
@@ -113,6 +113,15 @@ Bu dosya, openShield projesinin **gecmisinde alinan onemli kararlari, yasanan ha
 
 - **Tamamlanan:** Temel gizlilik korumalari (ads, fp, https, cookies, bounce, params, cosmetic, shred), popup UI, options sayfasi, build validasyonu, unit testler.
 - **Eksik:** Tam filter listeler, i18n, CMP otomatik red, Chrome Web Store yayini.
+
+### v1.5.0 - Kapsamli Guvenlik ve UX Iyilestirmeleri (2026-04-27)
+
+- **Tamamlanan:**
+  - Backend: `tabCountersCache` write-through cache yonetimi, `setShields` ile JS block kural temizligi, cohort ID collision koruması (`% 10000`)
+  - Content scripts: `click-to-load.js` innerHTML kaldirildi (SVG DOM API ile), `security.js` duplicate call onleme
+  - Frontend: Popup'da protection badges (Ads, FP, Params, Cookies), status description, gelismis layout; Options sayfasi yeniden organize edildi (Protection Level, Fingerprinting, Network Security, Privacy, Advanced section'lari)
+- **Test:** Tum unit testler gecti, build basarili
+- **Git:** Son surum hazirlandi
 
 ---
 

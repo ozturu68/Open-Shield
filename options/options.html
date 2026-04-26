@@ -13,16 +13,16 @@
       <h1>openShield Settings</h1>
     </header>
 
-    <section>
-      <h2>Global Defaults</h2>
-      <p class="hint">Applied automatically to all sites unless overridden per-site.</p>
+    <section class="section-basic">
+      <h2>Protection Level</h2>
+      <p class="hint">Default settings applied to all sites. You can override per-site in the popup.</p>
 
       <div class="field">
         <label for="g-ads">Ads &amp; trackers</label>
         <select id="g-ads" class="input">
-          <option value="standard">Standard</option>
-          <option value="aggressive">Aggressive</option>
-          <option value="off">Off</option>
+          <option value="standard">Standard — balanced blocking</option>
+          <option value="aggressive">Aggressive — more blocking</option>
+          <option value="off">Off — no ad blocking</option>
         </select>
       </div>
 
@@ -34,55 +34,65 @@
           <option value="off">Allow all</option>
         </select>
       </div>
+    </section>
+
+    <section class="section-fp">
+      <h2>Fingerprinting Protection</h2>
 
       <div class="field inline">
-        <label for="g-fp">Fingerprinting protection</label>
+        <label for="g-fp">Enable fingerprinting protection</label>
         <input type="checkbox" id="g-fp" class="toggle">
       </div>
 
       <div class="field">
-        <label for="g-fp-level">Fingerprinting noise level</label>
+        <label for="g-fp-level">Protection level</label>
         <select id="g-fp-level" class="input">
-          <option value="low">Low — minimal noise</option>
-          <option value="medium">Medium — balanced (default)</option>
-          <option value="high">High — aggressive</option>
-          <option value="strict">Strict — disable WebGL &amp; Canvas</option>
+          <option value="low">Low — minimal noise, least breakage</option>
+          <option value="medium">Medium — balanced (recommended)</option>
+          <option value="high">High — aggressive protection</option>
+          <option value="strict">Strict — disables WebGL &amp; Canvas</option>
         </select>
       </div>
+    </section>
+
+    <section class="section-network">
+      <h2>Network Security</h2>
 
       <div class="field inline">
-        <label for="g-https">HTTPS upgrade</label>
+        <label for="g-https">Upgrade HTTP to HTTPS</label>
         <input type="checkbox" id="g-https" class="toggle">
       </div>
 
       <div class="field inline">
-        <label for="g-shred">Auto Shred (clear site data on tab close)</label>
+        <label for="g-shred">Auto Shred — clear site data on tab close</label>
         <input type="checkbox" id="g-shred" class="toggle">
       </div>
-    </section>
-
-    <section>
-      <h2>Privacy Signals</h2>
 
       <div class="field inline">
-        <label for="g-gpc">Send Global Privacy Control (GPC) signal</label>
-        <input type="checkbox" id="g-gpc" class="toggle">
-      </div>
-
-      <div class="field inline">
-        <label for="g-link-protection">Link tracking protection (strip params)</label>
-        <input type="checkbox" id="g-link-protection" class="toggle">
-      </div>
-
-      <div class="field inline">
-        <label for="g-click-to-load">Click-to-load social media embeds</label>
+        <label for="g-click-to-load">Click-to-load social embeds</label>
         <input type="checkbox" id="g-click-to-load" class="toggle">
       </div>
 
       <div class="field inline">
-        <label for="g-amp-protection">AMP protection (redirect to canonical)</label>
+        <label for="g-amp-protection">AMP protection — redirect to canonical</label>
         <input type="checkbox" id="g-amp-protection" class="toggle">
       </div>
+    </section>
+
+    <section class="section-privacy">
+      <h2>Privacy</h2>
+
+      <div class="field inline">
+        <label for="g-gpc">Send Global Privacy Control signal</label>
+        <input type="checkbox" id="g-gpc" class="toggle">
+      </div>
+      <p class="hint">Notifies websites that you opt out of data sale. Supported by GDPR-compliant companies.</p>
+
+      <div class="field inline">
+        <label for="g-link-protection">Strip tracking parameters from links</label>
+        <input type="checkbox" id="g-link-protection" class="toggle">
+      </div>
+      <p class="hint">Removes utm_*, fbclid, gclid and similar parameters that track you across sites.</p>
 
       <div class="field inline">
         <label for="g-xss-protection">XSS &amp; clickjacking detection</label>
@@ -90,45 +100,42 @@
       </div>
     </section>
 
-    <section>
-      <h2>Advanced Filtering</h2>
+    <section class="section-advanced">
+      <h2>Advanced</h2>
 
       <div class="field inline">
-        <label for="g-dynamic-3p">Block all 3rd-party scripts (medium mode)</label>
+        <label for="g-dynamic-3p">Block all 3rd-party scripts</label>
         <input type="checkbox" id="g-dynamic-3p" class="toggle">
       </div>
-      <p class="hint">Blocks ALL third-party scripts and frames. Add exceptions via the popup per-site.</p>
+      <p class="hint">Enables "medium mode" blocking. Add exceptions per-site via popup.</p>
 
       <div class="field inline">
         <label for="g-procedural">Procedural cosmetic filtering</label>
         <input type="checkbox" id="g-procedural" class="toggle">
       </div>
-      <p class="hint">Enables :has-text(), :xpath(), :upward() selectors for advanced ad hiding.</p>
+      <p class="hint">Enables :has-text(), :xpath(), :upward() selectors for hiding dynamic ads.</p>
 
       <div class="field inline">
-        <label for="g-learning">Learning mode (auto-detect trackers)</label>
+        <label for="g-learning">Learning mode — auto-detect trackers</label>
         <input type="checkbox" id="g-learning" class="toggle">
       </div>
-      <p class="hint">Observes 3rd-party behavior and auto-blocks trackers. Privacy Badger style — no external lists needed.</p>
-    </section>
-
-    <section>
-      <h2>Security</h2>
+      <p class="hint">Observes third-party behavior and auto-blocks trackers. No external lists needed.</p>
 
       <div class="field inline">
-        <label for="g-secure-js">Selective JavaScript blocking (NoScript style)</label>
+        <label for="g-secure-js">Selective JavaScript blocking</label>
         <input type="checkbox" id="g-secure-js" class="toggle">
       </div>
-      <p class="hint">Per-site JS blocking toggle. Enable in popup for individual sites.</p>
+      <p class="hint">Enable per-site JS blocking from the popup. Useful for blocking heavy scripts.</p>
     </section>
 
-    <div class="actions" style="margin-bottom:16px">
-      <button id="save-global" class="btn">Save changes</button>
+    <div class="actions">
+      <button id="save-global" class="btn btn-primary">Save Changes</button>
       <span id="saved-global" class="ok hidden">Saved</span>
     </div>
 
     <section>
       <h2>Filter Lists</h2>
+      <p class="hint">Manage which filter lists are active. Disabling reduces protection but may improve performance.</p>
       <table class="table">
         <thead><tr><th>List</th><th>Enabled</th></tr></thead>
         <tbody id="filter-body"></tbody>
@@ -136,32 +143,49 @@
     </section>
 
     <section>
-      <h2>Cohort Tracking Database</h2>
-      <p class="hint">Auto-detected cross-site trackers from your browsing (Privacy Badger style).</p>
+      <h2>Tracker Database</h2>
+      <p class="hint">Cross-site trackers detected from your browsing. Learning mode builds this automatically.</p>
       <div id="cohort-stats" class="hint">Loading&hellip;</div>
     </section>
 
     <section>
       <h2>Exceptions</h2>
-      <p class="hint">One domain per line. Allowlist disables all shields. Blocklist always blocks.</p>
+      <p class="hint">One domain per line. Allowlist disables all shields for that domain. Blocklist adds domains to always block.</p>
       <div class="field">
         <label for="allow">Allowlist</label>
-        <textarea id="allow" class="input" rows="5" placeholder="example.com"></textarea>
+        <textarea id="allow" class="input" rows="4" placeholder="example.com&#10;trusted-site.org"></textarea>
       </div>
       <div class="field">
         <label for="block">Blocklist</label>
-        <textarea id="block" class="input" rows="5" placeholder="badactor.com"></textarea>
+        <textarea id="block" class="input" rows="4" placeholder="bad-actor.com&#10;tracker.net"></textarea>
       </div>
       <div class="actions">
-        <button id="save-lists" class="btn">Save lists</button>
+        <button id="save-lists" class="btn">Save Lists</button>
         <span id="saved-lists" class="ok hidden">Saved</span>
       </div>
     </section>
 
     <section class="about">
       <h2>About</h2>
-      <p><strong>Version</strong> 1.5.0 &middot; <strong>License</strong> MIT</p>
-      <p class="hint">No telemetry. No cloud sync. All data stays on your device. Firefox-compatible.</p>
+      <div class="about-info">
+        <div class="about-row">
+          <span class="about-label">Version</span>
+          <span class="about-value">1.5.0</span>
+        </div>
+        <div class="about-row">
+          <span class="about-label">License</span>
+          <span class="about-value">MIT</span>
+        </div>
+        <div class="about-row">
+          <span class="about-label">Data storage</span>
+          <span class="about-value">Local only</span>
+        </div>
+        <div class="about-row">
+          <span class="about-label">Telemetry</span>
+          <span class="about-value">None</span>
+        </div>
+      </div>
+      <p class="hint">No telemetry. No cloud sync. All data stays on your device. Works offline. Firefox-compatible.</p>
     </section>
   </div>
   <script src="options.js"></script>
