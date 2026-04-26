@@ -1,0 +1,30 @@
+[
+  {
+    "id": 1,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "regexSubstitution": "\\1?\\2"
+      }
+    },
+    "condition": {
+      "regexFilter": "^(https?://[^?#]*)\\?(?:utm_source|utm_medium|utm_campaign|utm_term|utm_content|fbclid|gclid|gclsrc|dclid|msclkid|yclid|mc_eid|mc_cid|_openstat|igshid|ref|source|affiliate_id|partner_id)=[^&]*(?:&(.*))?",
+      "resourceTypes": ["main_frame", "sub_frame"]
+    }
+  },
+  {
+    "id": 2,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "regexSubstitution": "\\1\\2\\3"
+      }
+    },
+    "condition": {
+      "regexFilter": "^(https?://[^?#]*)(.*)&(?:utm_source|utm_medium|utm_campaign|utm_term|utm_content|fbclid|gclid|gclsrc|dclid|msclkid|yclid|mc_eid|mc_cid|_openstat|igshid|ref|source|affiliate_id|partner_id)=[^&]*(?:&(.*))?",
+      "resourceTypes": ["main_frame", "sub_frame"]
+    }
+  }
+]

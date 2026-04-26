@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>openShield Settings</title>
+  <link rel="stylesheet" href="options.css">
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <img src="../icons/shield-on-48.png" alt="" width="28" height="28">
+      <h1>openShield Settings</h1>
+    </header>
+
+    <section>
+      <h2>Global Defaults</h2>
+      <p class="hint">Applied automatically to all sites unless overridden per-site.</p>
+
+      <div class="field">
+        <label for="g-ads">Ads &amp; trackers</label>
+        <select id="g-ads" class="input">
+          <option value="standard">Standard</option>
+          <option value="aggressive">Aggressive</option>
+          <option value="off">Off</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="g-cookies">Cookie blocking</label>
+        <select id="g-cookies" class="input">
+          <option value="third-party">3rd-party only</option>
+          <option value="all">All cookies</option>
+          <option value="off">Allow all</option>
+        </select>
+      </div>
+
+      <div class="field inline">
+        <label for="g-fp">Fingerprinting protection</label>
+        <input type="checkbox" id="g-fp" class="toggle">
+      </div>
+
+      <div class="field inline">
+        <label for="g-https">HTTPS upgrade</label>
+        <input type="checkbox" id="g-https" class="toggle">
+      </div>
+
+      <div class="field inline">
+        <label for="g-shred">Auto Shred (clear site data on tab close)</label>
+        <input type="checkbox" id="g-shred" class="toggle">
+      </div>
+
+      <div class="actions">
+        <button id="save-global" class="btn">Save changes</button>
+        <span id="saved-global" class="ok hidden">Saved</span>
+      </div>
+    </section>
+
+    <section>
+      <h2>Filter Lists</h2>
+      <table class="table">
+        <thead><tr><th>List</th><th>Enabled</th></tr></thead>
+        <tbody id="filter-body"></tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Exceptions</h2>
+      <p class="hint">One domain per line. Allowlist permanently disables shields. Blocklist always blocks.</p>
+      <div class="field">
+        <label for="allow">Allowlist</label>
+        <textarea id="allow" class="input" rows="5" placeholder="example.com"></textarea>
+      </div>
+      <div class="field">
+        <label for="block">Blocklist</label>
+        <textarea id="block" class="input" rows="5" placeholder="badactor.com"></textarea>
+      </div>
+      <div class="actions">
+        <button id="save-lists" class="btn">Save lists</button>
+        <span id="saved-lists" class="ok hidden">Saved</span>
+      </div>
+    </section>
+
+    <section class="about">
+      <h2>About</h2>
+      <p><strong>Version</strong> 1.0.0 &middot; <strong>License</strong> MIT</p>
+      <p class="hint">No telemetry. No cloud sync. All data stays on your device.</p>
+    </section>
+  </div>
+  <script src="options.js"></script>
+</body>
+</html>

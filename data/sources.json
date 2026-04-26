@@ -1,0 +1,72 @@
+{
+  "filterLists": [
+    {
+      "id": "easylist",
+      "name": "EasyList",
+      "category": "ads",
+      "url": "https://easylist.to/easylist/easylist.txt",
+      "enabled": true,
+      "format": "abp"
+    },
+    {
+      "id": "easyprivacy",
+      "name": "EasyPrivacy",
+      "category": "trackers",
+      "url": "https://easylist.to/easylist/easyprivacy.txt",
+      "enabled": true,
+      "format": "abp"
+    },
+    {
+      "id": "ublock-filters",
+      "name": "uBlock Origin Filters",
+      "category": "ads",
+      "url": "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/filters.txt",
+      "enabled": true,
+      "format": "abp"
+    },
+    {
+      "id": "ublock-privacy",
+      "name": "uBlock Origin Privacy",
+      "category": "trackers",
+      "url": "https://raw.githubusercontent.com/uBlockOrigin/uAssets/master/filters/privacy.txt",
+      "enabled": true,
+      "format": "abp"
+    },
+    {
+      "id": "adguard-base",
+      "name": "AdGuard Base",
+      "category": "ads",
+      "url": "https://filters.adtidy.org/extension/chromium/filters/2.txt",
+      "enabled": false,
+      "format": "abp"
+    },
+    {
+      "id": "adguard-tracking",
+      "name": "AdGuard Tracking Protection",
+      "category": "trackers",
+      "url": "https://filters.adtidy.org/extension/chromium/filters/3.txt",
+      "enabled": false,
+      "format": "abp"
+    }
+  ],
+  "hstsPreload": {
+    "url": "https://chromium.googlesource.com/chromium/src/+/main/net/http/transport_security_state_static.json?format=TEXT",
+    "enabled": true
+  },
+  "regionalLists": [
+    {
+      "id": "easylist-germany",
+      "name": "EasyList Germany",
+      "url": "https://easylist.to/easylistgermany/easylistgermany.txt",
+      "locale": "de",
+      "enabled": false
+    },
+    {
+      "id": "easylist-france",
+      "name": "EasyList France",
+      "url": "https://easylist-downloads.adblockplus.org/liste_fr.txt",
+      "locale": "fr",
+      "enabled": false
+    }
+  ]
+}

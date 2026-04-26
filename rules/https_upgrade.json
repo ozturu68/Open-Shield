@@ -1,0 +1,92 @@
+[
+  {
+    "id": 1,
+    "priority": 1,
+    "action": { "type": "upgradeScheme" },
+    "condition": {
+      "urlFilter": "http://example.com",
+      "resourceTypes": ["main_frame"]
+    }
+  },
+  {
+    "id": 2,
+    "priority": 1,
+    "action": { "type": "upgradeScheme" },
+    "condition": {
+      "urlFilter": "http://www.example.com",
+      "resourceTypes": ["main_frame"]
+    }
+  },
+  {
+    "id": 3,
+    "priority": 1,
+    "action": { "type": "upgradeScheme" },
+    "condition": {
+      "urlFilter": "http://github.com",
+      "resourceTypes": ["main_frame"]
+    }
+  },
+  {
+    "id": 4,
+    "priority": 1,
+    "action": { "type": "upgradeScheme" },
+    "condition": {
+      "urlFilter": "http://www.github.com",
+      "resourceTypes": ["main_frame"]
+    }
+  },
+  {
+    "id": 5,
+    "priority": 1,
+    "action": { "type": "upgradeScheme" },
+    "condition": {
+      "urlFilter": "http://stackoverflow.com",
+      "resourceTypes": ["main_frame"]
+    }
+  },
+  {
+    "id": 6,
+    "priority": 1,
+    "action": { "type": "upgradeScheme" },
+    "condition": {
+      "urlFilter": "http://www.stackoverflow.com",
+      "resourceTypes": ["main_frame"]
+    }
+  },
+  {
+    "id": 7,
+    "priority": 1,
+    "action": { "type": "upgradeScheme" },
+    "condition": {
+      "urlFilter": "http://wikipedia.org",
+      "resourceTypes": ["main_frame"]
+    }
+  },
+  {
+    "id": 8,
+    "priority": 1,
+    "action": { "type": "upgradeScheme" },
+    "condition": {
+      "urlFilter": "http://www.wikipedia.org",
+      "resourceTypes": ["main_frame"]
+    }
+  },
+  {
+    "id": 9,
+    "priority": 1,
+    "action": { "type": "upgradeScheme" },
+    "condition": {
+      "urlFilter": "http://reddit.com",
+      "resourceTypes": ["main_frame"]
+    }
+  },
+  {
+    "id": 10,
+    "priority": 1,
+    "action": { "type": "upgradeScheme" },
+    "condition": {
+      "urlFilter": "http://www.reddit.com",
+      "resourceTypes": ["main_frame"]
+    }
+  }
+]
