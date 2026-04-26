@@ -202,9 +202,11 @@
 
   let pending = [];
   let scheduled = false;
+  let debounceTimer = null;
 
   function flush() {
     scheduled = false;
+    debounceTimer = null;
     const nodes = pending;
     pending = [];
     for (const n of nodes) {
@@ -215,11 +217,8 @@
   function schedule() {
     if (scheduled) return;
     scheduled = true;
-    if (typeof requestIdleCallback === "function") {
-      requestIdleCallback(flush, { timeout: 100 });
-    } else {
-      requestAnimationFrame(flush);
-    }
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(flush, 50);
   }
 
   const obs = new MutationObserver(function(ms) {

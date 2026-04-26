@@ -8,12 +8,11 @@ import { hostname, isBrowser, normHost, seed, merge, hashForId, extractDomain, i
 
 const ALLOW_BASE = 100_000;
 const JS_BLOCK_BASE = 200_000;
-const COHORT_DNR_START = 60_000;
+const COHORT_DNR_START = 300_000;
 const LOG_MAX = 80;
 const DNR_STATIC_LIMIT = 30_000;
 const DNR_DYNAMIC_LIMIT = 5_000;
 const logCache = new Map();
-const cohortCache = new Map();
 
 const ALLOWED_HOSTS = new Set([
   "easylist.to", "easylist-downloads.adblockplus.org",
@@ -726,6 +725,29 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
       }
       case MSG.GET_LOG: reply({ log: await getLog(msg.tabId) }); break;
       case MSG.GET_COHORT_STATS: reply({ stats: await getCohortStats() }); break;
+      case "SET_RULESET": {
+        if (typeof msg.rulesetId !== "string") { reply({ error: "invalid rulesetId" }); return; }
+        try {
+          if (msg.enabled) await chrome.declarativeNetRequest.updateEnabledRulesets({ enableRulesetIds: [msg.rulesetId] });
+          else await chrome.declarativeNetRequest.updateEnabledRulesets({ disableRulesetIds: [msg.rulesetId] });
+          reply({ ok: true });
+        } catch (e) { reply({ error: e.message }); }
+        break;
+      }
+      case "SET_ALLOWLIST": {
+        if (!Array.isArray(msg.allow) || !Array.isArray(msg.block)) { reply({ error: "invalid params" }); return; }
+        try {
+          const existing = await chrome.declarativeNetRequest.getDynamicRules();
+          const remove = existing.filter(r => r.id >= 150_000 && r.id < 200_000).map(r => r.id);
+          const add = msg.allow.map((domain, i) => ({
+            id: 150_000 + i, priority: 2000, action: { type: "allow" },
+            condition: { initiatorDomains: [domain], resourceTypes: ["main_frame","sub_frame","script","image","stylesheet","xmlhttprequest","media","font","other"] }
+          }));
+          await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: remove, addRules: add });
+          reply({ ok: true });
+        } catch (e) { reply({ error: e.message }); }
+        break;
+      }
       case MSG.BOUNCE: {
         const tabId = sender.tab?.id;
         if (tabId && msg.dest && isValidDestination(msg.dest)) { await chrome.tabs.update(tabId, { url: msg.dest }); await inc(tabId, "bounces"); }

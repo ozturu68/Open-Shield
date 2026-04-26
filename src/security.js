@@ -59,12 +59,9 @@
 
   // ── Anti-Debugger / Anti-DevTools detection ──
   function detectAntiDebug() {
-    let triggered = false;
-    const start = performance.now();
-    debugger;
-    const elapsed = performance.now() - start;
-    if (elapsed > 100) triggered = true;
-    return triggered;
+    const devToolsOpen = (window.outerWidth - window.innerWidth > 100) ||
+                         (window.outerHeight - window.innerHeight > 100);
+    return devToolsOpen;
   }
 
   // ── Banner UI ──

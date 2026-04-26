@@ -5,7 +5,7 @@
   "use strict";
 
   const KEY = { GLOBAL: "globalSettings", META: "filterMeta", ALLOW: "customAllowlist", BLOCK: "customBlocklist" };
-  const MSG = { SET_GLOBAL: "SET_GLOBAL", GET_COHORT_STATS: "GET_COHORT_STATS" };
+  const MSG = { SET_GLOBAL: "SET_GLOBAL", GET_COHORT_STATS: "GET_COHORT_STATS", SET_RULESET: "SET_RULESET", SET_ALLOWLIST: "SET_ALLOWLIST" };
 
   const $ = id => document.getElementById(id);
 
@@ -15,6 +15,22 @@
   async function sendGlobal(k, v) {
     return new Promise((res, rej) => {
       chrome.runtime.sendMessage({ type: MSG.SET_GLOBAL, k, v }, r => {
+        chrome.runtime.lastError ? rej(chrome.runtime.lastError) : res(r);
+      });
+    });
+  }
+
+  async function sendRuleset(id, enabled) {
+    return new Promise((res, rej) => {
+      chrome.runtime.sendMessage({ type: MSG.SET_RULESET, rulesetId: id, enabled }, r => {
+        chrome.runtime.lastError ? rej(chrome.runtime.lastError) : res(r);
+      });
+    });
+  }
+
+  async function sendAllowlist(allow, block) {
+    return new Promise((res, rej) => {
+      chrome.runtime.sendMessage({ type: MSG.SET_ALLOWLIST, allow, block }, r => {
         chrome.runtime.lastError ? rej(chrome.runtime.lastError) : res(r);
       });
     });
@@ -85,9 +101,7 @@
       cb.type = "checkbox"; cb.checked = meta.enabled !== false;
       cb.addEventListener("change", async () => {
         try {
-          await chrome.declarativeNetRequest.updateEnabledRulesets({
-            [cb.checked ? "enableRulesetIds" : "disableRulesetIds"]: [l.id]
-          });
+          await sendRuleset(l.id, cb.checked);
           const s2 = await get(KEY.META); const m2 = s2[KEY.META] || {};
           m2[l.id] = { ...m2[l.id], enabled: cb.checked };
           await set({ [KEY.META]: m2 });
@@ -111,13 +125,7 @@
     const block = $("block").value.split("\n").map(s => s.trim().toLowerCase()).filter(s => s && domainRe.test(s));
     await set({ [KEY.ALLOW]: allow, [KEY.BLOCK]: block });
     try {
-      const existing = await chrome.declarativeNetRequest.getDynamicRules();
-      const remove = existing.filter(r => r.id >= 150_000 && r.id < 200_000).map(r => r.id);
-      const add = allow.map((domain, i) => ({
-        id: 150_000 + i, priority: 2000, action: { type: "allow" },
-        condition: { initiatorDomains: [domain], resourceTypes: ["main_frame","sub_frame","script","image","stylesheet","xmlhttprequest","media","font","other"] }
-      }));
-      await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: remove, addRules: add });
+      await sendAllowlist(allow, block);
     } catch (e) { console.error(e); }
     $("saved-lists").classList.remove("hidden");
     setTimeout(() => $("saved-lists").classList.add("hidden"), 1500);
