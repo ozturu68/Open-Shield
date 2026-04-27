@@ -3,189 +3,138 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>openShield Settings</title>
+  <title>openShield</title>
   <link rel="stylesheet" href="options.css">
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <img src="../icons/shield-on-48.png" alt="" width="28" height="28">
-      <h1>openShield Settings</h1>
-    </header>
-
-    <section class="section-basic">
-      <h2>Protection Level</h2>
-      <p class="hint">Default settings applied to all sites. You can override per-site in the popup.</p>
-
-      <div class="field">
-        <label for="g-ads">Ads &amp; trackers</label>
-        <select id="g-ads" class="input">
-          <option value="standard">Standard — balanced blocking</option>
-          <option value="aggressive">Aggressive — more blocking</option>
-          <option value="off">Off — no ad blocking</option>
-        </select>
+  <div class="container">
+    <div class="hero">
+      <div class="shield-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          <path class="check" d="M9 12l2 2 4-4"/>
+        </svg>
       </div>
-
-      <div class="field">
-        <label for="g-cookies">Cookie blocking</label>
-        <select id="g-cookies" class="input">
-          <option value="third-party">3rd-party only</option>
-          <option value="all">All cookies</option>
-          <option value="off">Allow all</option>
-        </select>
-      </div>
-    </section>
-
-    <section class="section-fp">
-      <h2>Fingerprinting Protection</h2>
-
-      <div class="field inline">
-        <label for="g-fp">Enable fingerprinting protection</label>
-        <input type="checkbox" id="g-fp" class="toggle">
-      </div>
-
-      <div class="field">
-        <label for="g-fp-level">Protection level</label>
-        <select id="g-fp-level" class="input">
-          <option value="low">Low — minimal noise, least breakage</option>
-          <option value="medium">Medium — balanced (recommended)</option>
-          <option value="high">High — aggressive protection</option>
-          <option value="strict">Strict — disables WebGL &amp; Canvas</option>
-        </select>
-      </div>
-    </section>
-
-    <section class="section-network">
-      <h2>Network Security</h2>
-
-      <div class="field inline">
-        <label for="g-https">Upgrade HTTP to HTTPS</label>
-        <input type="checkbox" id="g-https" class="toggle">
-      </div>
-
-      <div class="field inline">
-        <label for="g-shred">Auto Shred — clear site data on tab close</label>
-        <input type="checkbox" id="g-shred" class="toggle">
-      </div>
-
-      <div class="field inline">
-        <label for="g-click-to-load">Click-to-load social embeds</label>
-        <input type="checkbox" id="g-click-to-load" class="toggle">
-      </div>
-
-      <div class="field inline">
-        <label for="g-amp-protection">AMP protection — redirect to canonical</label>
-        <input type="checkbox" id="g-amp-protection" class="toggle">
-      </div>
-    </section>
-
-    <section class="section-privacy">
-      <h2>Privacy</h2>
-
-      <div class="field inline">
-        <label for="g-gpc">Send Global Privacy Control signal</label>
-        <input type="checkbox" id="g-gpc" class="toggle">
-      </div>
-      <p class="hint">Notifies websites that you opt out of data sale. Supported by GDPR-compliant companies.</p>
-
-      <div class="field inline">
-        <label for="g-link-protection">Strip tracking parameters from links</label>
-        <input type="checkbox" id="g-link-protection" class="toggle">
-      </div>
-      <p class="hint">Removes utm_*, fbclid, gclid and similar parameters that track you across sites.</p>
-
-      <div class="field inline">
-        <label for="g-xss-protection">XSS &amp; clickjacking detection</label>
-        <input type="checkbox" id="g-xss-protection" class="toggle">
-      </div>
-    </section>
-
-    <section class="section-advanced">
-      <h2>Advanced</h2>
-
-      <div class="field inline">
-        <label for="g-dynamic-3p">Block all 3rd-party scripts</label>
-        <input type="checkbox" id="g-dynamic-3p" class="toggle">
-      </div>
-      <p class="hint">Enables "medium mode" blocking. Add exceptions per-site via popup.</p>
-
-      <div class="field inline">
-        <label for="g-procedural">Procedural cosmetic filtering</label>
-        <input type="checkbox" id="g-procedural" class="toggle">
-      </div>
-      <p class="hint">Enables :has-text(), :xpath(), :upward() selectors for hiding dynamic ads.</p>
-
-      <div class="field inline">
-        <label for="g-learning">Learning mode — auto-detect trackers</label>
-        <input type="checkbox" id="g-learning" class="toggle">
-      </div>
-      <p class="hint">Observes third-party behavior and auto-blocks trackers. No external lists needed.</p>
-
-      <div class="field inline">
-        <label for="g-secure-js">Selective JavaScript blocking</label>
-        <input type="checkbox" id="g-secure-js" class="toggle">
-      </div>
-      <p class="hint">Enable per-site JS blocking from the popup. Useful for blocking heavy scripts.</p>
-    </section>
-
-    <div class="actions">
-      <button id="save-global" class="btn btn-primary">Save Changes</button>
-      <span id="saved-global" class="ok hidden">Saved</span>
+      <h1>openShield</h1>
+      <p class="tagline">Privacy protection that just works</p>
     </div>
 
-    <section>
-      <h2>Filter Lists</h2>
-      <p class="hint">Manage which filter lists are active. Disabling reduces protection but may improve performance.</p>
-      <table class="table">
-        <thead><tr><th>List</th><th>Enabled</th></tr></thead>
-        <tbody id="filter-body"></tbody>
-      </table>
-    </section>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon blocked">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+          </svg>
+        </div>
+        <div class="stat-value" id="stat-blocked">0</div>
+        <div class="stat-label">Blocked Requests</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon trackers">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </div>
+        <div class="stat-value" id="stat-trackers">0</div>
+        <div class="stat-label">Trackers Stopped</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon upgraded">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <polyline points="9 12 11 14 15 10"/>
+          </svg>
+        </div>
+        <div class="stat-value" id="stat-upgraded">0</div>
+        <div class="stat-label">HTTPS Upgrades</div>
+      </div>
+    </div>
 
-    <section>
-      <h2>Tracker Database</h2>
-      <p class="hint">Cross-site trackers detected from your browsing. Learning mode builds this automatically.</p>
-      <div id="cohort-stats" class="hint">Loading&hellip;</div>
-    </section>
+    <div class="features">
+      <h2>Protection Active</h2>
+      <div class="feature-list">
+        <div class="feature">
+          <span class="feature-icon ads"></span>
+          <span>Ads & Trackers Blocked</span>
+          <span class="badge active">Active</span>
+        </div>
+        <div class="feature">
+          <span class="feature-icon fp"></span>
+          <span>Fingerprinting Protection</span>
+          <span class="badge active">Active</span>
+        </div>
+        <div class="feature">
+          <span class="feature-icon webrtc"></span>
+          <span>WebRTC Leak Prevention</span>
+          <span class="badge active">Active</span>
+        </div>
+        <div class="feature">
+          <span class="feature-icon params"></span>
+          <span>Link Tracking Removed</span>
+          <span class="badge active">Active</span>
+        </div>
+        <div class="feature">
+          <span class="feature-icon social"></span>
+          <span>Social Widgets Contained</span>
+          <span class="badge active">Active</span>
+        </div>
+      </div>
+    </div>
 
-    <section>
-      <h2>Exceptions</h2>
-      <p class="hint">One domain per line. Allowlist disables all shields for that domain. Blocklist adds domains to always block.</p>
-      <div class="field">
-        <label for="allow">Allowlist</label>
-        <textarea id="allow" class="input" rows="4" placeholder="example.com&#10;trusted-site.org"></textarea>
+    <div class="cohort-section">
+      <h2>Tracker Insights</h2>
+      <p class="hint">Cross-site trackers detected from your browsing</p>
+      <div id="cohort-stats" class="cohort-list">
+        <div class="cohort-loading">Scanning your browsing patterns...</div>
       </div>
-      <div class="field">
-        <label for="block">Blocklist</label>
-        <textarea id="block" class="input" rows="4" placeholder="bad-actor.com&#10;tracker.net"></textarea>
-      </div>
-      <div class="actions">
-        <button id="save-lists" class="btn">Save Lists</button>
-        <span id="saved-lists" class="ok hidden">Saved</span>
-      </div>
-    </section>
+    </div>
 
     <section class="about">
-      <h2>About</h2>
-      <div class="about-info">
-        <div class="about-row">
-          <span class="about-label">Version</span>
-          <span class="about-value">1.5.0</span>
+      <div class="about-grid">
+        <div class="about-item">
+          <span class="about-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </span>
+          <div>
+            <div class="about-title">Zero Telemetry</div>
+            <div class="about-desc">No data leaves your device</div>
+          </div>
         </div>
-        <div class="about-row">
-          <span class="about-label">License</span>
-          <span class="about-value">MIT</span>
+        <div class="about-item">
+          <span class="about-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          </span>
+          <div>
+            <div class="about-title">Always Updated</div>
+            <div class="about-desc">Filter lists sync automatically</div>
+          </div>
         </div>
-        <div class="about-row">
-          <span class="about-label">Data storage</span>
-          <span class="about-value">Local only</span>
-        </div>
-        <div class="about-row">
-          <span class="about-label">Telemetry</span>
-          <span class="about-value">None</span>
+        <div class="about-item">
+          <span class="about-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="2" y1="12" x2="22" y2="12"/>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+          </span>
+          <div>
+            <div class="about-title">Offline Ready</div>
+            <div class="about-desc">Works without internet</div>
+          </div>
         </div>
       </div>
-      <p class="hint">No telemetry. No cloud sync. All data stays on your device. Works offline. Firefox-compatible.</p>
+      <div class="version">
+        <span>openShield v1.5.0</span>
+        <span class="dot">·</span>
+        <span>MIT License</span>
+      </div>
     </section>
   </div>
   <script src="options.js"></script>
