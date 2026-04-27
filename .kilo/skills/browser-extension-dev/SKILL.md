@@ -67,8 +67,11 @@ async function getSettings() {
 
 ```
 Statik kurallar:      1 - 99,999   (tools/convert-filters.js otomatik atar)
-Dinamik toggle:  100,000 - 149,999  (hostname hash tabanli)
-Dinamik allowlist: 150,000 - 199,999 (options sayfasindan)
+Dinamik filter:   10,000 - 59,999   (filters.js runtime fetch+convert, MAX_PER_LIST=1200)
+Dinamik toggle:  100,000 - 149,999  (hostname hash tabanli, setShields)
+Dinamik allowlist:150,000 - 199,999 (options sayfasindan, SET_ALLOWLIST)
+Dinamik JS block: 200,000 - 249,999 (setJSBlocked, hash tabanli)
+Cohort auto-block:300,000 - 309,999 (cohort.js, requestDomains format)
 ```
 
 ### 2.2. Statik Kural Ekleme

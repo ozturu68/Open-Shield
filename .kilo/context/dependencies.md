@@ -1,5 +1,5 @@
 ---
-last_updated: 2026-04-26
+last_updated: 2026-04-27
 status: current
 audit_tool: node tools/build.js, manuel code review
 ---
@@ -37,7 +37,7 @@ openShield'in "bagimliliklari" aslinda Chrome/Chromium'un sundugu Web Extension 
 | `chrome.tabs` | Sekme durumu: onRemoved, onUpdated, onActivated, get, update | Icon yonetimi, auto shred, bounce |
 | `chrome.action` | Toolbar icon: setIcon, setBadgeText, setBadgeBackgroundColor | UI gostergeleri |
 | `chrome.browsingData` | Site verisi temizleme: remove (cookies, localStorage, cache, indexedDB, sw) | Auto Shred |
-| `chrome.alarms` | Periyodik islemler (henuz kullanilmiyor, gelecekte filter guncelleme) | Planlandi |
+| `chrome.alarms` | Periyodik islemler: gunluk filter guncelleme (FILTER_UPDATE_INTERVAL_MIN=1440) + cohort temizleme | Filter update, cohort cleanup |
 
 ### 1.3. Manifest Permission'lari (Hangi API'lere Erisim Var)
 
@@ -148,6 +148,6 @@ AI su sorulari cevaplamalidir:
 
 ---
 
-**Son Guncelleme:** 2026-04-26
+**Son Guncelleme:** 2026-04-27
 **Sonraki Audit:** Her surum oncesi
 **Sahibi:** openShield Gelistirici

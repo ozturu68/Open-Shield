@@ -1,6 +1,6 @@
 ---
-last_updated: 2026-04-26
-version: 2.0.0
+last_updated: 2026-04-27
+version: 2.1.0
 enforce: true
 ---
 
@@ -91,14 +91,13 @@ Build: node tools/build.js basarili
 
 | Dosya/Konum | Modul Sistemi | Import Yapabilir | Import Edilebilir |
 |-------------|--------------|-----------------|------------------|
-| `src/background.js` | ESM | config.js, utils.js | — |
-| `src/config.js` | ESM | — | background.js |
-| `src/utils.js` | ESM | — | background.js |
-| `src/cosmetic.js` | IIFE | **YOK** | **YOK** |
-| `src/bounce.js` | IIFE | **YOK** | **YOK** |
-| `popup/popup.js` | IIFE (inline) | **YOK** | **YOK** |
-| `options/options.js` | IIFE (inline) | **YOK** | **YOK** |
-| MAIN-world injection | Self-contained | **KESINLIKLE YOK** | **YOK** |
+| `src/core/config.js` | ESM | — | Tum background modulleri |
+| `src/core/utils.js` | ESM | — | Tum background modulleri |
+| `src/background/*.js` (8 modul) | ESM | config.js, utils.js, diger background modulleri | index.js (entry point) |
+| `src/content/*.js` (5 script) | IIFE | **YOK** | **YOK** |
+| `ui/popup/popup.js` | IIFE (inline) | **YOK** | **YOK** |
+| `ui/options/options.js` | IIFE (inline) | **YOK** | **YOK** |
+| MAIN-world injection (`injections.js`) | Self-contained | **KESINLIKLE YOK** | **YOK** (serialize) |
 
 ### 2.2. Import Sirasi (ESM Dosyalari Icin)
 ```javascript
@@ -109,24 +108,35 @@ import { hostname, isBrowser, normHost, seed, merge } from "./utils.js";
 
 ### 2.3. File Co-location
 ```
-// openShield'de duz yapi tercih edilir (modul basina dizin yok)
+// v1.6.0 — Moduler yapi (her domain kendi alt dizininde)
 src/
-├── background.js    // Tek dosya, 400+ satir oldugunda bolunebilir
-├── config.js        // Sabitler tek dosyada
-└── utils.js         // Yardimcilar tek dosyada
+├── core/              # Paylasilan sabitler ve yardimcilar
+│   ├── config.js
+│   └── utils.js
+├── background/        # Service worker modulleri (8 dosya)
+│   ├── index.js       # Ana orkestrator
+│   ├── settings.js
+│   ├── dnr.js
+│   ├── injections.js
+│   ├── tab-lifecycle.js
+│   ├── filters.js
+│   ├── learning.js
+│   └── cohort.js
+├── content/           # Content script'ler (5 dosya, IIFE)
+│   ├── cosmetic.js
+│   ├── bounce.js
+│   ├── link-protection.js
+│   ├── click-to-load.js
+│   └── security.js
+└── polyfills/
+    └── browser-polyfill.js
 
 // UI dosyalari kendi dizinlerinde
-popup/
-├── popup.html
-├── popup.js
-└── popup.css
+ui/popup/   → popup.html, popup.js, popup.css
+ui/options/ → options.html, options.js, options.css
 
 // Testler merkezi
-tests/unit/
-├── config.test.js
-├── utils.test.js
-├── farbling.test.js
-└── params.test.js
+tests/unit/ (8 dosya)
 ```
 
 ---
@@ -141,7 +151,13 @@ tests/unit/
 | `SET_SITE` | UI → SW | Per-site ayar degistir | `{ type, h, k, v }` | `{ ok: true }` veya `{ error }` |
 | `SET_GLOBAL` | UI → SW | Global ayar degistir | `{ type, k, v }` | `{ ok: true }` veya `{ error }` |
 | `GET_LOG` | UI → SW | Block log detayi | `{ type, tabId }` | `{ log: [...] }` |
+| `GET_COHORT_STATS` | UI → SW | Cohort tracker istatistikleri | `{ type }` | `{ stats: [...] }` |
 | `BOUNCE` | Content → SW | Bounce link bildir | `{ type, dest }` | `{ ok: true }` |
+| `SECURITY_ALERT` | Content → SW | Guvenlik uyarisi | `{ type, alertType, url }` | `{ ok: true }` |
+| `LEARNING_SIGNALS` | Content → SW | Ogrenme sinyalleri | `{ type, signals, url }` | `{ ok: true }` |
+| `AMP_REDIRECT` | Content → SW | AMP yonlendirme | `{ type, canonical }` | `{ ok: true }` |
+| `SET_RULESET` | UI → SW | Ruleset enable/disable | `{ type, rulesetId, enabled }` | `{ ok: true }` |
+| `SET_ALLOWLIST` | UI → SW | Allowlist guncelleme | `{ type, allow, block }` | `{ ok: true }` |
 
 ### 3.2. Response Formati
 ```javascript
@@ -187,8 +203,8 @@ function isValidDestination(dest) {
 }
 
 // Izinli anahtar kontrolu
-const ALLOWED_SITE_KEYS = new Set(["shields", "ads", "fp", "https", "cookies", "bounce", "params", "cosmetic", "shred"]);
-const ALLOWED_GLOBAL_KEYS = new Set(["ads", "fp", "https", "cookies", "bounce", "params", "cosmetic", "shred"]);
+const ALLOWED_SITE_KEYS = new Set(["shields", "ads", "fp", "fpLevel", "https", "cookies", "bounce", "params", "cosmetic", "shred", "gpc", "linkProtection", "clickToLoad", "dynamic3p", "proceduralCosmetic", "learningMode", "secureJS", "xssProtection", "ampProtection"]);
+const ALLOWED_GLOBAL_KEYS = new Set(["ads", "fp", "fpLevel", "https", "cookies", "bounce", "params", "cosmetic", "shred", "gpc", "linkProtection", "clickToLoad", "dynamic3p", "proceduralCosmetic", "learningMode", "secureJS", "xssProtection", "ampProtection"]);
 ```
 
 ### 4.2. Error Handling Deseni
@@ -216,8 +232,11 @@ chrome.runtime.onMessage.addListener((msg, sender, reply) => {
 ### 5.1. Rule ID Araliklari
 ```
 Statik kurallar:    1+ (her ruleset kendi icinde artan, manifest-declared)
-Dinamik toggle:     100000–149999 (hostname hash tabanli: ALLOW_BASE + hash % 50000)
-Dinamik allowlist:  150000–199999 (options sayfasindan eklenen)
+Dinamik filter:     10,000–59,999 (filters.js runtime fetch+convert, MAX_PER_LIST=1200)
+Dinamik toggle:     100,000–149,999 (hostname hash tabanli: ALLOW_BASE + hash % 50000)
+Dinamik allowlist:  150,000–199,999 (options sayfasindan eklenen)
+Dinamik JS block:   200,000–249,999 (setJSBlocked, hash tabanli)
+Cohort auto-block:  300,000–309,999 (cohort.js, requestDomains format)
 ```
 
 ### 5.2. DNR Priority Stratejisi
@@ -287,6 +306,6 @@ feat(background): auto-shred ozelligi ekle
 
 ---
 
-**Son Guncelleme:** 2026-04-26
+**Son Guncelleme:** 2026-04-27
 **Sonraki Review:** Her ay
 **Sahibi:** openShield Gelistirici

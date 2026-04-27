@@ -1,7 +1,7 @@
 ---
-last_updated: 2026-04-26
+last_updated: 2026-04-27
 status: active
-next_review: 2026-07-26
+next_review: 2026-07-27
 ---
 
 # Architecture — openShield Mimari Kararlari ve Desenleri
@@ -35,8 +35,8 @@ Bu dosya, openShield'in **mimari kararlarini, sistem tasarimini, kullanilan dese
 │  ┌───────────────────────────────────────────────────────────┐  │
 │  │              Service Worker (background.js)                │  │
 │  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────────┐  │  │
-│  │  │ Settings │ │  DNR     │ │  Inject  │ │  Bounce      │  │  │
-│  │  │ Manager  │ │  Rules   │ │  Scripts │ │  Detection   │  │  │
+│  │  │ Settings │ │  DNR     │ │ Install  │ │  Bounce      │  │  │
+│  │  │ Manager  │ │  Rules   │ │  All     │ │  Detection   │  │  │
 │  │  └──────────┘ └──────────┘ └──────────┘ └──────────────┘  │  │
 │  │  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────────┐  │  │
 │  │  │ Counters │ │ Auto     │ │  Icon    │ │  Message     │  │  │
@@ -47,15 +47,18 @@ Bu dosya, openShield'in **mimari kararlarini, sistem tasarimini, kullanilan dese
 │         ▼                                      ▼                 │
 │  ┌──────────────────┐    ┌──────────────────────────────────┐  │
 │  │  DNR Engine      │    │  Web Page (MAIN world)            │  │
-│  │  (Chrome built-in)│   │  ├─ installFarbling()             │  │
-│  │                   │    │  ├─ installWebRTCBlock()         │  │
-│  │  Static Rules:    │    │  └─ installBeaconBlock()         │  │
-│  │  5 rulesets       │    └──────────────────────────────────┘  │
+│  │  (Chrome built-in)│   │  ├─ installAll()                   │  │
+│  │                   │    │  │  (GPC+Farbling+WebRTC+Beacon)  │  │
+│  │  Static Rules:    │    │  ├─ installLearningObserver()     │  │
+│  │  6 rulesets       │    └──────────────────────────────────┘  │
 │  │                   │                                          │
 │  │  Dynamic Rules:   │    ┌──────────────────────────────────┐  │
-│  │  toggle + allow   │    │  Web Page (ISOLATED world)        │  │
-│  └──────────────────┘    │  ├─ cosmetic.js (CSS hiding)      │  │
-│                          │  └─ bounce.js  (bounce detect)    │  │
+│  │  toggle+allow     │    │  Web Page (ISOLATED world)        │  │
+│  │  +jsBlock+cohort  │    │  ├─ cosmetic.js (CSS hiding)      │  │
+│  └──────────────────┘    │  ├─ bounce.js  (bounce detect)    │  │
+│                          │  ├─ link-protection.js             │  │
+│                          │  ├─ click-to-load.js               │  │
+│                          │  └─ security.js (XSS/clickjack)    │  │
 │                          └──────────────────────────────────┘  │
 │                                                                  │
 │  ┌──────────────────────────────────────────────────────────┐  │
@@ -106,14 +109,11 @@ Tum mesaj handler'lari input validasyonu yapar:
 
 ```
 Statik:    1...N per ruleset (manifest declared, incrementing)
-Dinamik:   100000 + (hostname_hash % 50000) — per-site shields toggle
-           150000 + i — allowlist entries
-           200000 + i — JS blocking rules
-           300000 + i — cohort auto-block
-```
-Statik:    1...N per ruleset (manifest declared, incrementing)
-Dinamik:   100000 + (hostname_hash % 50000) — per-site toggle
-           150000 + i — allowlist entries
+Filter:    10,000–59,999 (dinamik, build-time filter listelerden)
+Toggle:    100,000 + (hostname_hash % 50,000) — per-site shields toggle
+Allowlist: 150,000 + i — allowlist entries
+JS Block:  200,000 + i — JS blocking rules
+Cohort:    300,000 + i — cohort auto-block
 ```
 
 ### 3.2. Kural Oncelikleri
@@ -153,6 +153,7 @@ Tum event listener'lar service worker baslangicinda (ilk satirlarda) kaydedilir.
 - `chrome.tabs.onRemoved` / `onUpdated` / `onActivated`
 - `chrome.webNavigation.onCommitted` / `onBeforeNavigate`
 - `chrome.runtime.onMessage`
+- `chrome.alarms.onAlarm` (filter update + cohort cleanup)
 
 ---
 
@@ -248,8 +249,18 @@ Tum event listener'lar service worker baslangicinda (ilk satirlarda) kaydedilir.
 | **Gerekce** | MV3'te `webRequest` blocking API'si kaldirilmistir. Tek secenek DNR'dir. |
 | **Sonuclar** | Dinamik filtreleme yapilamaz (ornegin regex bazli URL filtreleme runtime'da degistirilemez). Statik kurallar extension guncellemesi gerektirir. Dinamik kurallar sinirli (5000). |
 
+### ADR-004: Consolidated Injection (installAll)
+
+| Alan | Deger |
+|------|-------|
+| **Tarih** | 2026-04-27 (v1.6.0) |
+| **Durum** | Kabul edildi |
+| **Karar** | GPC, Farbling, WebRTC, Beacon ve Learning injection'lari tek `installAll()` fonksiyonunda birlestirildi. Tek `executeScript` cagrisi ile tum MAIN-world enjeksiyonlari yapiliyor. |
+| **Gerekce** | 4-5 ayri `executeScript` cagrisi yerine tek cagri: IPC overhead'ini azaltir, script injection sirasini garantiler, kod sadeligi. |
+| **Sonuclar** | `injections.js`'te `installAll(seedVal, factor, enableLearning)` export ediliyor. `index.js` sadece bu fonksiyonu cagiriyor. |
+
 ---
 
-**Son Guncelleme:** 2026-04-26
+**Son Guncelleme:** 2026-04-27
 **Sonraki Review:** Her ceyrek (3 ay)
 **Sahibi:** openShield Gelistirici
