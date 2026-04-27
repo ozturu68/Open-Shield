@@ -109,7 +109,6 @@ function installFarbling(seed, factor) {
     const origCheck = document.fonts.check.bind(document.fonts);
     document.fonts.check = function(font, text) { return true; };
   }
-  const toStr = Function.prototype.toString;
   Object.defineProperty(Function.prototype, "toString", {
     value: function() { return wrapped.includes(this) ? `function ${this.name}() { [native code] }` : toStr.call(this); },
     writable: true, configurable: true
