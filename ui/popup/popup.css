@@ -303,3 +303,35 @@ input:checked + .track::before {
   margin-top: 10px;
   animation: fadeIn 0.3s ease-out;
 }
+
+/* ── Protection Badges ── */
+.protection-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  padding: 0 4px;
+  margin-bottom: 2px;
+}
+
+.badge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 5px;
+  letter-spacing: 0.2px;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
+}
+
+.badge.active {
+  background: var(--accent-glow);
+  color: var(--accent);
+  border: 1px solid var(--accent);
+}
+
+.badge.inactive {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--line);
+  opacity: 0.4;
+}

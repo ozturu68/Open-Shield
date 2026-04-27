@@ -150,11 +150,6 @@ export const CLICK_TO_LOAD_TEXTS = {
   default: "Click to load embedded content"
 };
 
-export const AMP_CACHE_DOMAINS = [
-  "www.google.com/amp/","ampproject.org",
-  "amp.cloudflare.com","bing-amp.com"
-];
-
 export const PROCEDURAL_OPERATORS = [
   "has-text","matches-css","xpath","upward","has","not",
   "min-text-length","matches-attr","matches-path"
@@ -179,7 +174,7 @@ export const COHORT_CLEANUP_DAYS = 30;
 export const FILTER_META_KEY = "filterMeta";
 export const ALARM_FILTER_UPDATE = "filterUpdate";
 export const ALARM_COHORT_CLEANUP = "cohortCleanup";
-export const MAX_PER_LIST = 4000;
+export const MAX_PER_LIST = 1200;
 
 export const ALLOWED_HOSTS = [
   "easylist.to","easylist-downloads.adblockplus.org",

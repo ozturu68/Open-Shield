@@ -1,5 +1,5 @@
 /**
- * openShield Popup — Modern, Animated UI
+ * openShield Popup — Modern, Animated UI with Protection Badges
  */
 (async () => {
   "use strict";
@@ -52,6 +52,24 @@
     statusText.textContent = on ? "Protected" : "Unprotected";
   }
 
+  function updateBadges(cfg) {
+    const badges = {
+      "badge-ads": cfg.ads !== "off",
+      "badge-fp": cfg.fp !== false,
+      "badge-https": cfg.https !== false,
+      "badge-cookies": cfg.cookies !== "off",
+      "badge-params": cfg.params !== false,
+      "badge-gpc": cfg.gpc !== false
+    };
+
+    for (const [id, active] of Object.entries(badges)) {
+      const el = $(id);
+      if (!el) continue;
+      el.classList.toggle("active", active);
+      el.classList.toggle("inactive", !active);
+    }
+  }
+
   async function init() {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     tabId = tab.id;
@@ -67,7 +85,10 @@
     $("hostname").textContent = hostname || "this site";
 
     const state = await send(MSG.GET_STATE, { tabId });
-    if (!state) return;
+    if (!state) {
+      $("status-text").textContent = "Unable to connect";
+      return;
+    }
 
     const cfg = state.cfg || {};
     const counts = state.counts || {};
@@ -88,6 +109,7 @@
     const on = cfg.shields !== false;
     $("master").checked = on;
     updateShieldUI(on);
+    updateBadges(cfg);
   }
 
   $("master").addEventListener("change", async () => {

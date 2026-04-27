@@ -29,7 +29,7 @@ export function installFarbling(seedVal, factor) {
   })();
 
   const toStr = Function.prototype.toString;
-  const wrapped = [];
+  const wrapped = new WeakSet();
 
   function wrap(proto, name, handler) {
     const d = Object.getOwnPropertyDescriptor(proto, name);
@@ -38,7 +38,7 @@ export function installFarbling(seedVal, factor) {
     const fn = function (...a) { return handler(orig, this, a, prng); };
     Object.defineProperty(fn, "name", { value: name });
     Object.defineProperty(proto, name, { value: fn, writable: true, enumerable: d.enumerable, configurable: true });
-    wrapped.push(fn);
+    wrapped.add(fn);
   }
 
   function noiseCanvas(b64, rng) {
@@ -63,7 +63,15 @@ export function installFarbling(seedVal, factor) {
     a[0] = blob => {
       if (!blob?.type?.includes("png")) { cb(blob); return; }
       const r = new FileReader();
-      r.onloadend = () => { fetch(noiseCanvas(r.result, rng)).then(r => r.blob()).then(b => cb(b)).catch(() => cb(blob)); };
+      r.onloadend = () => {
+        const noised = noiseCanvas(r.result, rng);
+        const parts = noised.split(",");
+        if (parts.length !== 2) { cb(blob); return; }
+        const binary = atob(parts[1]);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        cb(new Blob([bytes], { type: "image/png" }));
+      };
       r.readAsDataURL(blob);
     };
     return o.apply(t, a);
@@ -102,7 +110,7 @@ export function installFarbling(seedVal, factor) {
     document.fonts.check = function() { return true; };
   }
   Object.defineProperty(Function.prototype, "toString", {
-    value: function() { return wrapped.includes(this) ? `function ${this.name}() { [native code] }` : toStr.call(this); },
+    value: function() { return wrapped.has(this) ? `function ${this.name}() { [native code] }` : toStr.call(this); },
     writable: true, configurable: true
   });
 }
@@ -240,4 +248,27 @@ export function installGPC() {
     Object.defineProperty(navigator, "globalPrivacyControl", { get: function() { return true; }, configurable: true, enumerable: true });
     Object.defineProperty(navigator, "doNotTrack", { get: function() { return "1"; }, configurable: true, enumerable: true });
   } catch {}
+}
+
+/**
+ * Consolidated injection: GPC + Farbling + WebRTC + Beacon in one call.
+ * @param {string} seedVal - 32-char hex seed (null to skip farbling)
+ * @param {number} factor - noise multiplier
+ * @param {boolean} enableLearning - install learning observer
+ */
+export function installAll(seedVal, factor, enableLearning) {
+  if (window.__osAllInstalled) return;
+  window.__osAllInstalled = true;
+
+  installGPC();
+
+  if (seedVal) {
+    installFarbling(seedVal, factor);
+    installWebRTCBlock();
+    installBeaconBlock();
+  }
+
+  if (enableLearning) {
+    installLearningObserver();
+  }
 }

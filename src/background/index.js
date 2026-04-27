@@ -5,7 +5,7 @@
 import { DEFAULT_SETTINGS, FP_NOISE_FACTORS, KEY, SESSION, MSG, BOUNCE_DOMAINS, MESSAGE_SCHEMAS, ALARM_COHORT_CLEANUP } from "../core/config.js";
 import { hostname, isBrowser, normHost, seed, validateMessage, isValidHostname, isValidDestination, isAMP } from "../core/utils.js";
 
-import { installFarbling, installWebRTCBlock, installBeaconBlock, installLearningObserver, installGPC } from "./injections.js";
+import { installAll } from "./injections.js";
 import { initDefaults, effective, counters, inc, pushLog, getLog } from "./settings.js";
 import { setShields, setDynamic3p, setJSBlocked, isJSBlocked, checkDNRQuota } from "./dnr.js";
 import { getCohortStats, cleanupCohortDB } from "./cohort.js";
@@ -44,8 +44,6 @@ chrome.webNavigation.onCommitted.addListener(async d => {
   const h = normHost(hostname(d.url));
   if (!h) return;
 
-  injectAll(d.tabId, h).catch(() => {});
-
   if (isAMP(d.url)) {
     try {
       const cfg = await effective(h);
@@ -63,7 +61,10 @@ chrome.webNavigation.onCommitted.addListener(async d => {
     } catch (err) {
       console.warn("[openShield] AMP protection failed:", err?.message || err);
     }
+    return;
   }
+
+  injectAll(d.tabId, h).catch(() => {});
 });
 
 async function injectAll(tabId, h) {
@@ -71,23 +72,26 @@ async function injectAll(tabId, h) {
   const cfg = await effective(h);
   if (cfg.shields === false) return;
 
-  if (cfg.gpc !== false) {
-    chrome.scripting.executeScript({ target: { tabId }, world: "MAIN", func: installGPC, injectImmediately: true }).catch(() => {});
+  const hasFarbling = cfg.fp !== false || cfg.gpc !== false;
+  if (!hasFarbling && !cfg.learningMode) {
+    if (cfg.gpc !== false) {
+      chrome.scripting.executeScript({ target: { tabId }, world: "MAIN", func: installAll, args: [null, 0, cfg.learningMode === true], injectImmediately: true }).catch(() => {});
+    }
+    return;
   }
-  if (cfg.fp) {
+
+  let seedVal = null, factor = 1;
+  if (cfg.fp !== false) {
     const s = await chrome.storage.session.get(SESSION.SEEDS);
     const seeds = s[SESSION.SEEDS] || {};
     let sv = seeds[h];
     if (!sv) { sv = seed(); seeds[h] = sv; await chrome.storage.session.set({ [SESSION.SEEDS]: seeds }); }
+    seedVal = sv;
     const fLevel = cfg.fpLevel || "medium";
-    const factor = FP_NOISE_FACTORS[fLevel] ?? FP_NOISE_FACTORS.medium;
-    chrome.scripting.executeScript({ target: { tabId }, world: "MAIN", func: installFarbling, args: [sv, factor], injectImmediately: true }).catch(() => {});
-    chrome.scripting.executeScript({ target: { tabId }, world: "MAIN", func: installWebRTCBlock, injectImmediately: true }).catch(() => {});
-    chrome.scripting.executeScript({ target: { tabId }, world: "MAIN", func: installBeaconBlock, injectImmediately: true }).catch(() => {});
+    factor = FP_NOISE_FACTORS[fLevel] ?? FP_NOISE_FACTORS.medium;
   }
-  if (cfg.learningMode) {
-    chrome.scripting.executeScript({ target: { tabId }, world: "MAIN", func: installLearningObserver, injectImmediately: true }).catch(() => {});
-  }
+
+  chrome.scripting.executeScript({ target: { tabId }, world: "MAIN", func: installAll, args: [seedVal, factor, cfg.learningMode === true], injectImmediately: true }).catch(() => {});
 }
 
 // ── Bounce Tracking ──

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>openShield</title>
+  <title>openShield Settings</title>
   <link rel="stylesheet" href="options.css">
 </head>
 <body>
@@ -23,8 +23,7 @@
       <div class="stat-card">
         <div class="stat-icon blocked">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
+            <circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/>
           </svg>
         </div>
         <div class="stat-value" id="stat-blocked">0</div>
@@ -52,36 +51,192 @@
       </div>
     </div>
 
-    <div class="features">
-      <h2>Protection Active</h2>
-      <div class="feature-list">
-        <div class="feature">
-          <span class="feature-icon ads"></span>
-          <span>Ads & Trackers Blocked</span>
-          <span class="badge active">Active</span>
+    <!-- Settings -->
+    <section class="settings-section">
+      <h2>Protection Settings</h2>
+
+      <div class="setting-group">
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-label">Ad &amp; Tracker Blocking</span>
+            <span class="setting-hint">Block ads, trackers, and malware domains</span>
+          </div>
+          <select id="setting-ads" class="setting-select">
+            <option value="off">Off</option>
+            <option value="standard">Standard</option>
+            <option value="strict">Strict</option>
+          </select>
         </div>
-        <div class="feature">
-          <span class="feature-icon fp"></span>
-          <span>Fingerprinting Protection</span>
-          <span class="badge active">Active</span>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-label">Fingerprinting Protection</span>
+            <span class="setting-hint">Randomize canvas, WebGL, audio fingerprints</span>
+          </div>
+          <div class="setting-right">
+            <select id="setting-fpLevel" class="setting-select setting-select-sm">
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+              <option value="strict">Strict</option>
+            </select>
+            <label class="toggle-sm">
+              <input type="checkbox" id="setting-fp" checked>
+              <span class="track-sm"></span>
+            </label>
+          </div>
         </div>
-        <div class="feature">
-          <span class="feature-icon webrtc"></span>
-          <span>WebRTC Leak Prevention</span>
-          <span class="badge active">Active</span>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-label">HTTPS Upgrades</span>
+            <span class="setting-hint">Automatically upgrade HTTP to HTTPS</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="setting-https" checked>
+            <span class="track"></span>
+          </label>
         </div>
-        <div class="feature">
-          <span class="feature-icon params"></span>
-          <span>Link Tracking Removed</span>
-          <span class="badge active">Active</span>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-label">Cookie Blocking</span>
+            <span class="setting-hint">Control how third-party cookies are handled</span>
+          </div>
+          <select id="setting-cookies" class="setting-select">
+            <option value="off">Allow All</option>
+            <option value="third-party">Block 3rd-party</option>
+            <option value="all">Block All</option>
+          </select>
         </div>
-        <div class="feature">
-          <span class="feature-icon social"></span>
-          <span>Social Widgets Contained</span>
-          <span class="badge active">Active</span>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-label">Bounce Tracking Protection</span>
+            <span class="setting-hint">Redirect through known tracking domains</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="setting-bounce" checked>
+            <span class="track"></span>
+          </label>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-label">Link Tracking Removal</span>
+            <span class="setting-hint">Strip tracking parameters from URLs</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="setting-params" checked>
+            <span class="track"></span>
+          </label>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-label">Cosmetic Filtering</span>
+            <span class="setting-hint">Hide ad placeholders and empty spaces</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="setting-cosmetic" checked>
+            <span class="track"></span>
+          </label>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-label">Auto Shred</span>
+            <span class="setting-hint">Clear site data when tab is closed</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="setting-shred">
+            <span class="track"></span>
+          </label>
         </div>
       </div>
-    </div>
+
+      <h2 style="margin-top:32px">Advanced</h2>
+      <div class="setting-group">
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-label">Global Privacy Control</span>
+            <span class="setting-hint">Send GPC and Do Not Track signals</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="setting-gpc" checked>
+            <span class="track"></span>
+          </label>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-label">Link Protection</span>
+            <span class="setting-hint">Scrub tracking params from page links</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="setting-linkProtection" checked>
+            <span class="track"></span>
+          </label>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-label">Click-to-Load</span>
+            <span class="setting-hint">Block social media embeds until clicked</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="setting-clickToLoad" checked>
+            <span class="track"></span>
+          </label>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-label">Procedural Cosmetic</span>
+            <span class="setting-hint">Advanced CSS-based ad detection</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="setting-proceduralCosmetic" checked>
+            <span class="track"></span>
+          </label>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-label">Learning Mode</span>
+            <span class="setting-hint">Detect new trackers from browsing patterns</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="setting-learningMode" checked>
+            <span class="track"></span>
+          </label>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-label">Cross-Site Scripting Protection</span>
+            <span class="setting-hint">Detect reflected XSS and clickjacking</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="setting-xssProtection" checked>
+            <span class="track"></span>
+          </label>
+        </div>
+
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-label">AMP Protection</span>
+            <span class="setting-hint">Redirect AMP pages to original URLs</span>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" id="setting-ampProtection" checked>
+            <span class="track"></span>
+          </label>
+        </div>
+
+      </div>
+    </section>
 
     <div class="cohort-section">
       <h2>Tracker Insights</h2>
@@ -131,7 +286,7 @@
         </div>
       </div>
       <div class="version">
-        <span>openShield v1.5.0</span>
+        <span>openShield v1.6.0</span>
         <span class="dot">·</span>
         <span>MIT License</span>
       </div>

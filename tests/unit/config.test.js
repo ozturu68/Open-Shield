@@ -103,10 +103,11 @@ test("TRACKING_SCORES has valid weights", async () => {
   }
 });
 
-test("AMP_CACHE_DOMAINS is non-empty array", async () => {
-  const { AMP_CACHE_DOMAINS } = await load();
-  assert.ok(Array.isArray(AMP_CACHE_DOMAINS));
-  assert.ok(AMP_CACHE_DOMAINS.length > 0);
+test("isAMP detects AMP pages", async () => {
+  const { isAMP } = await import("../../src/core/utils.js");
+  assert.strictEqual(isAMP("https://www.google.com/amp/s/example.com/article"), true);
+  assert.strictEqual(isAMP("https://example-com.ampproject.org"), true);
+  assert.strictEqual(isAMP("https://normal-site.com/page"), false);
 });
 
 test("PROCEDURAL_OPERATORS includes all expected operators", async () => {

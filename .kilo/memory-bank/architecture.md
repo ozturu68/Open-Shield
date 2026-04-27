@@ -162,13 +162,23 @@ Tum event listener'lar service worker baslangicinda (ilk satirlarda) kaydedilir.
 
 | Dosya | Sorumluluk | Bagimliliklar |
 |-------|-----------|--------------|
-| `config.js` | Sabitler, storage key'leri, mesaj tipleri | Yok |
-| `utils.js` | Saf yardimci fonksiyonlar | Yok |
-| `background.js` | Service worker mantigi | config.js, utils.js |
-| `cosmetic.js` | ISOLATED dunya CSS gizleme | Yok (IIFE) |
-| `bounce.js` | ISOLATED dunya bounce tespiti | Yok (IIFE) |
-| `popup.js` | Popup UI mantigi | chrome.runtime (message) |
-| `options.js` | Options sayfasi mantigi | chrome.runtime, chrome.declarativeNetRequest |
+| `core/config.js` | Sabitler, storage key'leri, mesaj tipleri | Yok |
+| `core/utils.js` | Saf yardimci fonksiyonlar | Yok |
+| `background/index.js` | Service worker orkestrasyonu, message router | config.js, utils.js, tum background modulleri |
+| `background/settings.js` | Write-through ayar yonetimi, counter, log | config.js, utils.js |
+| `background/dnr.js` | Dinamik DNR kural yonetimi | config.js, utils.js |
+| `background/injections.js` | MAIN-world enjeksiyon fonksiyonlari | Yok (self-contained) |
+| `background/tab-lifecycle.js` | Tab yasam dongusu, auto-shred, icon | config.js, utils.js, settings.js |
+| `background/filters.js` | ABP→DNR donusturme, filter guncelleme | config.js, utils.js |
+| `background/learning.js` | Heuristic tracker sinyal isleme | config.js, utils.js, cohort.js |
+| `background/cohort.js` | Privacy Badger tarzi cohort izleme | config.js, utils.js, dnr.js, settings.js |
+| `content/cosmetic.js` | ISOLATED dunya CSS gizleme | Yok (IIFE) |
+| `content/bounce.js` | ISOLATED dunya bounce tespiti | Yok (IIFE) |
+| `content/link-protection.js` | ISOLATED dunya link koruma | Yok (IIFE) |
+| `content/click-to-load.js` | ISOLATED dunya social embed | Yok (IIFE) |
+| `content/security.js` | ISOLATED dunya XSS/clickjack tespiti | Yok (IIFE) |
+| `ui/popup/popup.js` | Popup UI mantigi | chrome.runtime (message) |
+| `ui/options/options.js` | Options ayar ve istatistik | chrome.runtime, chrome.storage |
 
 ### 5.2. Kullanilan Desenler
 

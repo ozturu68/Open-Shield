@@ -241,16 +241,19 @@
 
   const obs = new MutationObserver(function(ms) {
     if (!document.getElementById(STYLE_ID)) inject();
+    let hasElements = false;
     for (const m of ms) {
       if (m.type === "childList") {
         for (const n of m.addedNodes) {
           if (n.nodeType === Node.ELEMENT_NODE) {
             pending.push(n);
+            hasElements = true;
             if (pending.length >= MAX_PENDING) { flush(); return; }
           }
         }
       }
     }
+    if (!hasElements) return;
     if (pending.length) schedule();
   });
 

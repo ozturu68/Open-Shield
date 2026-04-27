@@ -7,6 +7,7 @@ import { merge, normHost, hostname } from "../core/utils.js";
 
 const logCache = new Map();
 const tabCountersCache = new Map();
+let lastBadgeText = new Map();
 
 // ── Counter Batching ──
 let countersPending = false;
@@ -89,11 +90,12 @@ export async function inc(tabId, field) {
   }
 
   const t = c.blocked + c.upgraded + (c.jsBlocked || 0) + (c.cohortBlocked || 0);
-  if (t > 0) {
-    chrome.action.setBadgeText({ tabId, text: t > 99 ? "99+" : String(t) }).catch(() => {});
-    chrome.action.setBadgeBackgroundColor({ tabId, color: "#E07B00" }).catch(() => {});
-  } else {
-    chrome.action.setBadgeText({ tabId, text: "" }).catch(() => {});
+  const newText = t > 99 ? "99+" : t > 0 ? String(t) : "";
+  const prev = lastBadgeText.get(tabId) || "";
+  if (newText !== prev) {
+    lastBadgeText.set(tabId, newText);
+    chrome.action.setBadgeText({ tabId, text: newText }).catch(() => {});
+    if (t > 0) chrome.action.setBadgeBackgroundColor({ tabId, color: "#E07B00" }).catch(() => {});
   }
 }
 
@@ -123,4 +125,5 @@ export function clearTabCaches(tabId) {
   logCache.delete(tabId);
   tabCountersCache.delete(tabId);
   logBatch.delete(tabId);
+  lastBadgeText.delete(tabId);
 }

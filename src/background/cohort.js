@@ -38,7 +38,7 @@ export async function recordThirdParty(tabId, thirdPartyDomain) {
 
 export async function autoBlockCohort(domain, tabId) {
   const id = cohortId(domain);
-  const rule = { id, priority: 1, action: { type: "block" }, condition: { urlFilter: `||${domain}^`, resourceTypes: ["script","image","xmlhttprequest","sub_frame"] } };
+  const rule = { id, priority: 1, action: { type: "block" }, condition: { requestDomains: [domain], resourceTypes: ["script","image","xmlhttprequest","sub_frame"] } };
   try {
     await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: [id], addRules: [rule] });
     if (tabId) inc(tabId, "cohortBlocked").catch(() => {});
