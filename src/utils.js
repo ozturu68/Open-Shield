@@ -75,10 +75,6 @@ export function isAMP(url) {
     const u = new URL(url);
     if (u.hostname === "www.google.com" && u.pathname.startsWith("/amp/")) return true;
     if (u.hostname.endsWith(".ampproject.org")) return true;
-    if (u.pathname.includes("/amp/") && u.hostname !== "www.google.com") {
-      const html = ""; // signal to check content
-      return true;
-    }
     return false;
   } catch { return false; }
 }
@@ -91,4 +87,38 @@ export function isAMP(url) {
 export function extractAMPCanonical(html) {
   const match = html.match(/<link[^>]+rel=["']canonical["'][^>]+href=["']([^"']+)["']/i);
   return match ? match[1] : null;
+}
+
+/**
+ * Safe Chrome API wrapper with error handling.
+ * @param {Function} fn - Async function to execute
+ * @param {string} [context=''] - Context for error messages
+ * @returns {Promise<any>}
+ */
+export async function safeApiCall(fn, context = "") {
+  try {
+    return await fn();
+  } catch (err) {
+    if (chrome.runtime.lastError) {
+      console.warn(`[openShield] ${context}:`, chrome.runtime.lastError.message);
+    } else {
+      console.error(`[openShield] ${context}:`, err);
+    }
+    return null;
+  }
+}
+
+/**
+ * Message schema validator for background message handlers.
+ * @param {object} message - The message to validate
+ * @param {object} schema - The schema to validate against
+ * @returns {boolean}
+ */
+export function validateMessage(message, schema) {
+  if (!message || typeof message !== "object") return false;
+  for (const [key, expectedType] of Object.entries(schema)) {
+    if (expectedType === "any") continue;
+    if (typeof message[key] !== expectedType) return false;
+  }
+  return true;
 }

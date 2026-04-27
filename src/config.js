@@ -57,7 +57,6 @@ export const MSG = {
   SET_GLOBAL: "SET_GLOBAL",
   GET_LOG: "GET_LOG",
   BOUNCE: "BOUNCE",
-  SET_DYNAMIC_3P: "SET_DYNAMIC_3P",
   GET_COHORT_STATS: "GET_COHORT_STATS",
   SECURITY_ALERT: "SECURITY_ALERT",
   SECURITY_ALERT_DISMISSED: "SECURITY_ALERT_DISMISSED"
@@ -70,6 +69,7 @@ export const BOUNCE_DOMAINS = [
 
 // Privacy Badger-style: 3 domains threshold for auto-block
 export const COHORT_THRESHOLD = 3;
+export const MAX_SITES_PER_COHORT = 100;
 
 // Learning mode scoring weights
 export const TRACKING_SCORES = {

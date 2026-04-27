@@ -82,9 +82,10 @@ test("FP_NOISE_FACTORS includes strict level", async () => {
   assert.ok("strict" in FP_NOISE_FACTORS);
 });
 
-test("MSG constants include new message types", async () => {
+test("MSG constants include expected message types", async () => {
   const { MSG } = await load();
-  assert.strictEqual(MSG.SET_DYNAMIC_3P, "SET_DYNAMIC_3P");
+  assert.strictEqual(MSG.GET_STATE, "GET_STATE");
+  assert.strictEqual(MSG.SET_SITE, "SET_SITE");
   assert.strictEqual(MSG.GET_COHORT_STATS, "GET_COHORT_STATS");
   assert.strictEqual(typeof MSG.SECURITY_ALERT, "string");
 });
@@ -114,4 +115,10 @@ test("PROCEDURAL_OPERATORS includes all expected operators", async () => {
   assert.ok(PROCEDURAL_OPERATORS.includes("matches-css"));
   assert.ok(PROCEDURAL_OPERATORS.includes("xpath"));
   assert.ok(PROCEDURAL_OPERATORS.includes("upward"));
+});
+
+test("MAX_SITES_PER_COHORT is positive number", async () => {
+  const { MAX_SITES_PER_COHORT } = await load();
+  assert.strictEqual(typeof MAX_SITES_PER_COHORT, "number");
+  assert.ok(MAX_SITES_PER_COHORT > 0);
 });

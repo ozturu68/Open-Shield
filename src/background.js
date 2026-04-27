@@ -3,7 +3,7 @@
  * v1.5.0 — Four-phase enhancement: dynamic 3P, procedural cosmetic,
  * cohort tracking, learning mode, selective JS, AMP, Firefox support.
  */
-import { DEFAULT_SETTINGS, FP_NOISE_FACTORS, KEY, SESSION, MSG, BOUNCE_DOMAINS, COHORT_THRESHOLD, TRACKING_SCORES, LEARNING_THRESHOLD } from "./config.js";
+import { DEFAULT_SETTINGS, FP_NOISE_FACTORS, KEY, SESSION, MSG, BOUNCE_DOMAINS, COHORT_THRESHOLD, TRACKING_SCORES, LEARNING_THRESHOLD, MAX_SITES_PER_COHORT } from "./config.js";
 import { hostname, isBrowser, normHost, seed, merge, hashForId, extractDomain, isAMP, extractAMPCanonical } from "./utils.js";
 
 const ALLOW_BASE = 100_000;
@@ -109,8 +109,9 @@ function installFarbling(seed, factor) {
     const origCheck = document.fonts.check.bind(document.fonts);
     document.fonts.check = function(font, text) { return true; };
   }
+  const toStr = Function.prototype.toString;
   Object.defineProperty(Function.prototype, "toString", {
-    value: function toString() { return wrapped.includes(this) ? `function ${this.name}() { [native code] }` : toStr.call(this); },
+    value: function() { return wrapped.includes(this) ? `function ${this.name}() { [native code] }` : toStr.call(this); },
     writable: true, configurable: true
   });
 }
@@ -287,15 +288,19 @@ async function inc(tabId, field) {
   if (!c) {
     const s = await chrome.storage.session.get(SESSION.COUNTERS);
     c = (s[SESSION.COUNTERS] || {})[tabId] || { blocked: 0, upgraded: 0, bounces: 0, jsBlocked: 0, cohortBlocked: 0 };
+    tabCountersCache.set(tabId, c);
   }
   c[field] = (c[field] || 0) + 1;
-  tabCountersCache.set(tabId, c);
   const all = (await chrome.storage.session.get(SESSION.COUNTERS))[SESSION.COUNTERS] || {};
   all[tabId] = c;
   await chrome.storage.session.set({ [SESSION.COUNTERS]: all });
   const t = c.blocked + c.upgraded + (c.jsBlocked || 0) + (c.cohortBlocked || 0);
-  chrome.action.setBadgeText({ tabId, text: t > 99 ? "99+" : t > 0 ? String(t) : "" }).catch(() => {});
-  chrome.action.setBadgeBackgroundColor({ tabId, color: "#E07B00" }).catch(() => {});
+  if (t > 0) {
+    chrome.action.setBadgeText({ tabId, text: t > 99 ? "99+" : String(t) }).catch(() => {});
+    chrome.action.setBadgeBackgroundColor({ tabId, color: "#E07B00" }).catch(() => {});
+  } else {
+    chrome.action.setBadgeText({ tabId, text: "" }).catch(() => {});
+  }
 }
 
 // ── Block log ──
@@ -488,6 +493,11 @@ async function recordThirdParty(tabId, thirdPartyDomain) {
   if (!db[thirdPartyDomain]) db[thirdPartyDomain] = { sites: {}, firstSeen: Date.now(), autoBlocked: false };
   db[thirdPartyDomain].sites[firstParty] = Date.now();
   db[thirdPartyDomain].lastSeen = Date.now();
+
+  if (Object.keys(db[thirdPartyDomain].sites).length > MAX_SITES_PER_COHORT) {
+    const sorted = Object.entries(db[thirdPartyDomain].sites).sort((a, b) => b[1] - a[1]);
+    db[thirdPartyDomain].sites = Object.fromEntries(sorted.slice(0, MAX_SITES_PER_COHORT));
+  }
 
   const siteCount = Object.keys(db[thirdPartyDomain].sites).length;
   if (siteCount >= COHORT_THRESHOLD && !db[thirdPartyDomain].autoBlocked) {

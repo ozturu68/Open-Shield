@@ -49,12 +49,14 @@
 
   const HIDE_CSS = "display:none!important;visibility:hidden!important;opacity:0!important;height:0!important;min-height:0!important;max-height:0!important;pointer-events:none!important";
   const STYLE_ID = "__osCosmetic";
+  const MAX_BATCH = 100;
+  const SELECTOR_STRING = SELECTORS.join(",");
 
-  // ── Procedural Selector Engine ──
+  const processed = new WeakSet();
+
   function matchesProcedural(el, selector) {
     if (!el || el.nodeType !== 1) return false;
 
-    // :: operator chain
     const parts = selector.split(/(?=:(?:has-text|matches-css-after|matches-css-before|matches-css|xpath|upward|has|not|min-text-length|matches-attr|matches-path)\()/);
 
     let current = el;
@@ -128,7 +130,6 @@
         const re = new RegExp(path.replace(/^\//, "").replace(/\/$/, ""));
         if (!re.test(location.pathname)) return false;
       } else if (current.matches) {
-        // Only attempt matches() if it looks like a standard CSS selector (no procedural syntax)
         if (!part.includes(":matches-css") && !part.includes(":xpath(") && !part.includes(":has-text") && !part.includes(":upward") && !part.includes(":min-text-length") && !part.includes(":matches-attr") && !part.includes(":matches-path")) {
           try {
             if (!current.matches(part)) return false;
@@ -152,8 +153,7 @@
     return str.substring(start, i - 1);
   }
 
-  // ── Style injection ──
-  const css = SELECTORS.join(",") + "{" + HIDE_CSS + "}";
+  const css = SELECTOR_STRING + "{" + HIDE_CSS + "}";
 
   function inject() {
     if (document.getElementById(STYLE_ID)) return;
@@ -166,37 +166,32 @@
 
   inject();
 
-  // ── Procedural matching ──
   function hideElement(el) {
     el.style.cssText += HIDE_CSS;
   }
 
-  function checkProcedural(el) {
+  function checkAndHide(el) {
+    if (processed.has(el)) return;
     if (el.nodeType !== 1) return;
     if (el.id === STYLE_ID) return;
+    processed.add(el);
     for (const sel of PROCEDURAL_SELECTORS) {
-      if (matchesProcedural(el, sel)) {
-        hideElement(el);
-        return;
-      }
+      if (matchesProcedural(el, sel)) { hideElement(el); return; }
     }
-    for (const sel of SELECTORS) {
-      if (el.matches?.(sel)) {
-        hideElement(el);
-        return;
-      }
-    }
-    for (const sel of SELECTORS) {
-      const q = el.querySelectorAll?.(sel);
-      if (!q) continue;
-      for (const c of q) hideElement(c);
-    }
-    for (const sel of PROCEDURAL_SELECTORS) {
-      const all = el.querySelectorAll?.("*");
-      if (!all) continue;
-      for (const c of all) {
-        if (matchesProcedural(c, sel)) hideElement(c);
-      }
+  }
+
+  function processBatch(elements) {
+    let count = 0;
+    for (const el of elements) {
+      if (count >= MAX_BATCH) break;
+      if (el.nodeType !== 1) continue;
+      if (processed.has(el)) continue;
+      processed.add(el);
+      count++;
+      checkAndHide(el);
+      if (el.matches?.(SELECTOR_STRING)) { hideElement(el); continue; }
+      const matches = el.querySelectorAll?.(SELECTOR_STRING);
+      if (matches) for (const m of matches) { if (!processed.has(m)) { processed.add(m); hideElement(m); } }
     }
   }
 
@@ -207,11 +202,8 @@
   function flush() {
     scheduled = false;
     debounceTimer = null;
-    const nodes = pending;
-    pending = [];
-    for (const n of nodes) {
-      checkProcedural(n);
-    }
+    const nodes = pending.splice(0);
+    processBatch(nodes);
   }
 
   function schedule() {
@@ -240,8 +232,12 @@
     }, { once: true });
   }
 
-  // ── Initial scan ──
   if (document.readyState !== "loading") {
-    checkProcedural(document.body || document.documentElement);
+    const body = document.body;
+    if (body) {
+      processBatch(body.querySelectorAll("*"));
+      const matches = body.querySelectorAll(SELECTOR_STRING);
+      for (const el of matches) { if (!processed.has(el)) { processed.add(el); hideElement(el); } }
+    }
   }
 })();
