@@ -10,32 +10,13 @@
             "removeParams": [
               "utm_source","utm_medium","utm_campaign","utm_term","utm_content","utm_id",
               "fbclid","gclid","gclsrc","dclid","msclkid","yclid","twclid",
-              "mc_eid","mc_cid","_openstat","igshid","igsh","ref","source",
+              "mc_eid","mc_cid","_openstat","igshid","igsh",
               "sc_campaign","sc_channel","sc_content","sc_medium","sc_outcome","sc_geo","sc_country",
               "affiliate_id","partner_id","trkCampaign","trkPartner","trkLink",
               "oly_anon_id","oly_enc_id","oly_enc_ticket_id","_ga","_gl",
               "ck_subscriber_id","hsCtaTracking","hsa_cam","hsa_grp","hsa_mt","hsa_src",
               "hsa_ad","hsa_acc","hsa_net","hsa_ver","vero_id","vero_conv",
-              "wickedid","wicked_source","wt_mc","wt_zmc","wt_sr","wt_cd"
-            ]
-          }
-        }
-      }
-    },
-    "condition": {
-      "resourceTypes": ["main_frame","sub_frame"],
-      "urlFilter": "*"
-    }
-  },
-  {
-    "id": 2,
-    "priority": 1,
-    "action": {
-      "type": "redirect",
-      "redirect": {
-        "transform": {
-          "queryTransform": {
-            "removeParams": [
+              "wickedid","wicked_source","wt_mc","wt_zmc","wt_sr","wt_cd",
               "si","sms_ss","sms_source","sms_clickid","sms_uph",
               "mbid","mb_source","mb_campaign",
               "mtm_campaign","mtm_source","mtm_medium","mtm_content","mtm_cid","mtm_group","mtm_placement",
@@ -45,26 +26,7 @@
               "click_id","clickid","tracking_id","track_id","trk","trkref",
               "cmpid","cmp","campaign_id","campid","cid","cust_id","customer_id",
               "awtrc","atc","aa_campaign","aa_source","aa_medium","aa_content",
-              "ttclid","rdt_cid","SnapchatShareId","ocid","ncid","nr_email_referer"
-            ]
-          }
-        }
-      }
-    },
-    "condition": {
-      "resourceTypes": ["main_frame","sub_frame"],
-      "urlFilter": "*"
-    }
-  },
-  {
-    "id": 3,
-    "priority": 1,
-    "action": {
-      "type": "redirect",
-      "redirect": {
-        "transform": {
-          "queryTransform": {
-            "removeParams": [
+              "ttclid","rdt_cid","SnapchatShareId","ocid","ncid","nr_email_referer",
               "extlink","ob_marketer_id","ob_campaign_id","ob_ad_id",
               "ob_click_id","ob_ad_group_id","ob_publisher_id",
               "elqTrackId","elq_mid","elq_cid","elqTrack","elq",
@@ -73,7 +35,7 @@
               "cvo_campaign","cvo_adgroup","cvo_creative","cvo_pid","cvo_adid",
               "cvo_sid","cvo_format","cvo_lineitem",
               "wp_sc","wp_tc","wp_cp","wp_mkt","wp_ref",
-              "zanpid","zarsrc","rdt_cid","oly_enc_id","vero_id","vero_conv",
+              "zanpid","zarsrc","oly_enc_id","vero_id","vero_conv",
               "ad_id","adgroup_id","adset_id","campaign_id","creative_id","placement_id",
               "feeditemid","article_id","content_id","offer_id","product_id","variant_id",
               "category_id","store_id","seller_id","merchant_id","aff_id","aff_sub",

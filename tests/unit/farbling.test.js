@@ -37,14 +37,3 @@ test("base64 canvas mutation flips bits", () => {
   for (let i = 0; i < u.length; i++) if (u[i] !== orig[i]) { changed = true; break; }
   assert.ok(changed);
 });
-
-test("base64 canvas mutation flips bits", () => {
-  const b64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==";
-  const bin = Buffer.from(b64, "base64");
-  const u = new Uint8Array(bin);
-  const orig = u.slice();
-  u[50] ^= 1;
-  let changed = false;
-  for (let i = 0; i < u.length; i++) if (u[i] !== orig[i]) { changed = true; break; }
-  assert.ok(changed);
-});

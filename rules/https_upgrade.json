@@ -1,92 +1,52 @@
 [
-  {
-    "id": 1,
-    "priority": 1,
-    "action": { "type": "upgradeScheme" },
-    "condition": {
-      "urlFilter": "http://example.com",
-      "resourceTypes": ["main_frame"]
-    }
-  },
-  {
-    "id": 2,
-    "priority": 1,
-    "action": { "type": "upgradeScheme" },
-    "condition": {
-      "urlFilter": "http://www.example.com",
-      "resourceTypes": ["main_frame"]
-    }
-  },
-  {
-    "id": 3,
-    "priority": 1,
-    "action": { "type": "upgradeScheme" },
-    "condition": {
-      "urlFilter": "http://github.com",
-      "resourceTypes": ["main_frame"]
-    }
-  },
-  {
-    "id": 4,
-    "priority": 1,
-    "action": { "type": "upgradeScheme" },
-    "condition": {
-      "urlFilter": "http://www.github.com",
-      "resourceTypes": ["main_frame"]
-    }
-  },
-  {
-    "id": 5,
-    "priority": 1,
-    "action": { "type": "upgradeScheme" },
-    "condition": {
-      "urlFilter": "http://stackoverflow.com",
-      "resourceTypes": ["main_frame"]
-    }
-  },
-  {
-    "id": 6,
-    "priority": 1,
-    "action": { "type": "upgradeScheme" },
-    "condition": {
-      "urlFilter": "http://www.stackoverflow.com",
-      "resourceTypes": ["main_frame"]
-    }
-  },
-  {
-    "id": 7,
-    "priority": 1,
-    "action": { "type": "upgradeScheme" },
-    "condition": {
-      "urlFilter": "http://wikipedia.org",
-      "resourceTypes": ["main_frame"]
-    }
-  },
-  {
-    "id": 8,
-    "priority": 1,
-    "action": { "type": "upgradeScheme" },
-    "condition": {
-      "urlFilter": "http://www.wikipedia.org",
-      "resourceTypes": ["main_frame"]
-    }
-  },
-  {
-    "id": 9,
-    "priority": 1,
-    "action": { "type": "upgradeScheme" },
-    "condition": {
-      "urlFilter": "http://reddit.com",
-      "resourceTypes": ["main_frame"]
-    }
-  },
-  {
-    "id": 10,
-    "priority": 1,
-    "action": { "type": "upgradeScheme" },
-    "condition": {
-      "urlFilter": "http://www.reddit.com",
-      "resourceTypes": ["main_frame"]
-    }
-  }
+  { "id": 1, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://google.com", "resourceTypes": ["main_frame"] } },
+  { "id": 2, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://www.google.com", "resourceTypes": ["main_frame"] } },
+  { "id": 3, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://youtube.com", "resourceTypes": ["main_frame"] } },
+  { "id": 4, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://www.youtube.com", "resourceTypes": ["main_frame"] } },
+  { "id": 5, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://facebook.com", "resourceTypes": ["main_frame"] } },
+  { "id": 6, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://www.facebook.com", "resourceTypes": ["main_frame"] } },
+  { "id": 7, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://twitter.com", "resourceTypes": ["main_frame"] } },
+  { "id": 8, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://www.twitter.com", "resourceTypes": ["main_frame"] } },
+  { "id": 9, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://instagram.com", "resourceTypes": ["main_frame"] } },
+  { "id": 10, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://www.instagram.com", "resourceTypes": ["main_frame"] } },
+  { "id": 11, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://reddit.com", "resourceTypes": ["main_frame"] } },
+  { "id": 12, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://www.reddit.com", "resourceTypes": ["main_frame"] } },
+  { "id": 13, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://github.com", "resourceTypes": ["main_frame"] } },
+  { "id": 14, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://www.github.com", "resourceTypes": ["main_frame"] } },
+  { "id": 15, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://wikipedia.org", "resourceTypes": ["main_frame"] } },
+  { "id": 16, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://www.wikipedia.org", "resourceTypes": ["main_frame"] } },
+  { "id": 17, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://amazon.com", "resourceTypes": ["main_frame"] } },
+  { "id": 18, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://www.amazon.com", "resourceTypes": ["main_frame"] } },
+  { "id": 19, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://linkedin.com", "resourceTypes": ["main_frame"] } },
+  { "id": 20, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://www.linkedin.com", "resourceTypes": ["main_frame"] } },
+  { "id": 21, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://netflix.com", "resourceTypes": ["main_frame"] } },
+  { "id": 22, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://www.netflix.com", "resourceTypes": ["main_frame"] } },
+  { "id": 23, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://nytimes.com", "resourceTypes": ["main_frame"] } },
+  { "id": 24, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://www.nytimes.com", "resourceTypes": ["main_frame"] } },
+  { "id": 25, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://bbc.com", "resourceTypes": ["main_frame"] } },
+  { "id": 26, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://www.bbc.com", "resourceTypes": ["main_frame"] } },
+  { "id": 27, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://microsoft.com", "resourceTypes": ["main_frame"] } },
+  { "id": 28, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://www.microsoft.com", "resourceTypes": ["main_frame"] } },
+  { "id": 29, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://apple.com", "resourceTypes": ["main_frame"] } },
+  { "id": 30, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://www.apple.com", "resourceTypes": ["main_frame"] } },
+  { "id": 31, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://stackoverflow.com", "resourceTypes": ["main_frame"] } },
+  { "id": 32, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://www.stackoverflow.com", "resourceTypes": ["main_frame"] } },
+  { "id": 33, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://twitch.tv", "resourceTypes": ["main_frame"] } },
+  { "id": 34, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://www.twitch.tv", "resourceTypes": ["main_frame"] } },
+  { "id": 35, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://whatsapp.com", "resourceTypes": ["main_frame"] } },
+  { "id": 36, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://www.whatsapp.com", "resourceTypes": ["main_frame"] } },
+  { "id": 37, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://paypal.com", "resourceTypes": ["main_frame"] } },
+  { "id": 38, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://www.paypal.com", "resourceTypes": ["main_frame"] } },
+  { "id": 39, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://spotify.com", "resourceTypes": ["main_frame"] } },
+  { "id": 40, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://www.spotify.com", "resourceTypes": ["main_frame"] } },
+  { "id": 41, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://yahoo.com", "resourceTypes": ["main_frame"] } },
+  { "id": 42, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://www.yahoo.com", "resourceTypes": ["main_frame"] } },
+  { "id": 43, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://live.com", "resourceTypes": ["main_frame"] } },
+  { "id": 44, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://www.live.com", "resourceTypes": ["main_frame"] } },
+  { "id": 45, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://tiktok.com", "resourceTypes": ["main_frame"] } },
+  { "id": 46, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://www.tiktok.com", "resourceTypes": ["main_frame"] } },
+  { "id": 47, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://bing.com", "resourceTypes": ["main_frame"] } },
+  { "id": 48, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://www.bing.com", "resourceTypes": ["main_frame"] } },
+  { "id": 49, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://duckduckgo.com", "resourceTypes": ["main_frame"] } },
+  { "id": 50, "priority": 1, "action": { "type": "upgradeScheme" }, "condition": { "urlFilter": "http://www.duckduckgo.com", "resourceTypes": ["main_frame"] } }
 ]

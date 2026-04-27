@@ -2,36 +2,47 @@
  * DNR (declarativeNetRequest) rule management.
  * Rule ID ranges:
  *   100,000–149,999  Per-site shields toggle (allow)
- *   150,000–199,999  Allowlist
- *   200,000–249,999  Selective JS blocking
- *   300,000–309,999  Cohort auto-block
+ *   150,000–159,999  Per-site 3p-block (block)
+ *   200,000–249,999  Selective JS blocking (block)
+ *   300,000–309,999  Cohort auto-block (block)
+ *
+ * Priority hierarchy (higher = evaluated first):
+ *   5000 — shields OFF allow-all (overrides everything)
+ *   1000 — JS blocked
+ *    100 — 3p-block per-site
+ *      1 — Static rules
  */
-import { KEY, ALLOW_BASE, JS_BLOCK_BASE, COHORT_DNR_START, DNR_STATIC_LIMIT, DNR_DYNAMIC_LIMIT, SESSION } from "../core/config.js";
+import { KEY, ALLOW_BASE, JS_BLOCK_BASE, COHORT_DNR_START, DNR_STATIC_LIMIT, DNR_DYNAMIC_LIMIT } from "../core/config.js";
 import { hashForId } from "../core/utils.js";
+
+const D3P_BASE = 150_000;
 
 export function allowId(h) { return hashForId(h, ALLOW_BASE, 50_000); }
 export function jsBlockId(h) { return hashForId(h, JS_BLOCK_BASE, 50_000); }
+export function d3pId(h) { return hashForId(h, D3P_BASE, 10_000); }
 export function cohortId(domain) { return COHORT_DNR_START + (hashForId(domain, 0, 10_000)); }
 
 export async function setShields(h, on) {
   const id = allowId(h);
-  const jsId = jsBlockId(h);
-  const toRemove = [id, jsId];
   if (on) {
-    try { await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: toRemove }); }
+    try { await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: [id] }); }
     catch (err) { console.warn("[openShield] setShields removeRules failed:", err?.message || err); }
   } else {
-    const rule = { id, priority: 2000, action: { type: "allow" }, condition: { initiatorDomains: [h], resourceTypes: ["main_frame","sub_frame","script","image","stylesheet","xmlhttprequest","media","font","other"] } };
-    try { await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: toRemove, addRules: [rule] }); }
+    const rule = { id, priority: 5000, action: { type: "allow" }, condition: { initiatorDomains: [h], resourceTypes: ["main_frame","sub_frame","script","image","stylesheet","xmlhttprequest","media","font","other"] } };
+    try { await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: [id], addRules: [rule] }); }
     catch (err) { console.warn("[openShield] setShields updateDynamicRules failed:", err?.message || err); }
   }
 }
 
 export async function setDynamic3p(h, on) {
+  const id = d3pId(h);
   if (on) {
-    await chrome.declarativeNetRequest.updateEnabledRulesets({ enableRulesetIds: ["3p-block"] }).catch(() => {});
+    const rule = { id, priority: 100, action: { type: "block" }, condition: { initiatorDomains: [h], domainType: "thirdParty", resourceTypes: ["script","sub_frame"] } };
+    try { await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: [id], addRules: [rule] }); }
+    catch (err) { console.warn("[openShield] setDynamic3p failed:", err?.message || err); }
   } else {
-    await chrome.declarativeNetRequest.updateEnabledRulesets({ disableRulesetIds: ["3p-block"] }).catch(() => {});
+    try { await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: [id] }); }
+    catch (err) { console.warn("[openShield] setDynamic3p remove failed:", err?.message || err); }
   }
   const s = await chrome.storage.local.get(KEY.SITES);
   const sites = s[KEY.SITES] || {};
@@ -43,7 +54,7 @@ export async function setDynamic3p(h, on) {
 export async function setJSBlocked(h, blocked) {
   const id = jsBlockId(h);
   if (blocked) {
-    const rule = { id, priority: 3000, action: { type: "block" }, condition: { initiatorDomains: [h], resourceTypes: ["script"] } };
+    const rule = { id, priority: 1000, action: { type: "block" }, condition: { initiatorDomains: [h], resourceTypes: ["script"] } };
     try { await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: [id], addRules: [rule] }); }
     catch (err) { console.warn("[openShield] setJSBlocked updateDynamicRules failed:", err?.message || err); }
   } else {

@@ -1,13 +1,32 @@
 /**
  * Settings engine, counters, and block log with write-through caching.
- * Includes batched storage writes for performance.
+ * Includes batched storage writes and storage version migration.
  */
 import { DEFAULT_SETTINGS, KEY, SESSION, LOG_MAX, COUNTERS_BATCH_MS, LOG_BATCH_MS } from "../core/config.js";
 import { merge, normHost, hostname } from "../core/utils.js";
 
+const STORAGE_VERSION = 1;
 const logCache = new Map();
 const tabCountersCache = new Map();
 let lastBadgeText = new Map();
+
+// ── Storage Migration ──
+
+async function migrateStorage() {
+  const s = await chrome.storage.local.get("storageVer");
+  const currentVer = s.storageVer || 0;
+  if (currentVer >= STORAGE_VERSION) return;
+
+  if (currentVer < 1) {
+    const existing = await chrome.storage.local.get("globalSettings");
+    if (existing.globalSettings && typeof existing.globalSettings.cookies === "string") {
+      existing.globalSettings.cookies = "third-party";
+      await chrome.storage.local.set({ globalSettings: existing.globalSettings });
+    }
+  }
+
+  await chrome.storage.local.set({ storageVer: STORAGE_VERSION });
+}
 
 // ── Counter Batching ──
 let countersPending = false;
@@ -42,6 +61,7 @@ async function flushLogs() {
 // ── Settings ──
 
 export async function initDefaults() {
+  await migrateStorage();
   const s = await chrome.storage.local.get([KEY.GLOBAL, KEY.SITES, KEY.COHORT, KEY.LEARNING, KEY.JS_BLOCKED]);
   const g = merge(DEFAULT_SETTINGS, s[KEY.GLOBAL] || {});
   await chrome.storage.local.set({

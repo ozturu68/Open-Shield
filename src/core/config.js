@@ -63,8 +63,12 @@ export const MSG = {
 };
 
 export const BOUNCE_DOMAINS = [
-  "l.facebook.com","l.messenger.com","t.co","ow.ly",
-  "bit.ly","tinyurl.com","buff.ly","rebrand.ly","short.link"
+  "l.facebook.com","lm.facebook.com","l.messenger.com","t.co","ow.ly",
+  "bit.ly","tinyurl.com","buff.ly","rebrand.ly","short.link",
+  "amzn.to","go.skimresources.com","out.reddit.com","lnkd.in",
+  "t.umblr.com","trib.al","ift.tt","d.agkn.com","x.co","p.liadm.com",
+  "linksynergy.com","href.li","pix.li","anrdoezrs.net","dpbolvw.net",
+  "jdoqocy.com","kqzyfj.com","tkqlhce.com","emjcd.com"
 ];
 
 export const COHORT_THRESHOLD = 3;
@@ -85,7 +89,7 @@ export const LEARNING_THRESHOLD = 1.2;
 export const TRACKING_PARAMS = [
   "utm_source","utm_medium","utm_campaign","utm_term","utm_content","utm_id",
   "fbclid","gclid","gclsrc","dclid","msclkid","yclid","twclid",
-  "mc_eid","mc_cid","_openstat","igshid","ref","source",
+  "mc_eid","mc_cid","_openstat","igshid",
   "sc_campaign","sc_channel","sc_content","sc_medium","sc_outcome","sc_geo","sc_country",
   "affiliate_id","partner_id","trkCampaign","trkPartner","trkLink",
   "oly_anon_id","oly_enc_id","oly_enc_ticket_id","_ga","_gl",

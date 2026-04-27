@@ -14,8 +14,8 @@
   { "id": 13, "priority": 1, "action": { "type": "block" }, "condition": { "urlFilter": "||mixpanel.com^", "resourceTypes": ["script","xmlhttprequest"] } },
   { "id": 14, "priority": 1, "action": { "type": "block" }, "condition": { "urlFilter": "||amplitude.com^", "resourceTypes": ["script","xmlhttprequest"] } },
   { "id": 15, "priority": 1, "action": { "type": "block" }, "condition": { "urlFilter": "||plausible.io^", "resourceTypes": ["script","xmlhttprequest"] } },
-  { "id": 16, "priority": 1, "action": { "type": "block" }, "condition": { "urlFilter": "||matomo.php", "resourceTypes": ["script","image","xmlhttprequest"] } },
-  { "id": 17, "priority": 1, "action": { "type": "block" }, "condition": { "urlFilter": "||piwik.php", "resourceTypes": ["script","image","xmlhttprequest"] } },
+  { "id": 16, "priority": 1, "action": { "type": "block" }, "condition": { "urlFilter": "*matomo.php*", "resourceTypes": ["script","image","xmlhttprequest"] } },
+  { "id": 17, "priority": 1, "action": { "type": "block" }, "condition": { "urlFilter": "*piwik.php*", "resourceTypes": ["script","image","xmlhttprequest"] } },
   { "id": 18, "priority": 1, "action": { "type": "block" }, "condition": { "urlFilter": "||mc.yandex.ru^", "resourceTypes": ["script","image"] } },
   { "id": 19, "priority": 1, "action": { "type": "block" }, "condition": { "urlFilter": "||hm.baidu.com^", "resourceTypes": ["script","image"] } },
   { "id": 20, "priority": 1, "action": { "type": "block" }, "condition": { "urlFilter": "||logs.binance.com^", "resourceTypes": ["script","xmlhttprequest"] } }

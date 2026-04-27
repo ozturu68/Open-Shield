@@ -28,17 +28,14 @@ export function installFarbling(seedVal, factor) {
     return () => { s ^= s << 13; s ^= s >>> 17; s ^= s << 5; return ((s >>> 0) / 4294967296); };
   })();
 
-  const toStr = Function.prototype.toString;
-  const wrapped = new WeakSet();
-
   function wrap(proto, name, handler) {
     const d = Object.getOwnPropertyDescriptor(proto, name);
     if (!d || typeof d.value !== "function") return;
     const orig = d.value;
     const fn = function (...a) { return handler(orig, this, a, prng); };
     Object.defineProperty(fn, "name", { value: name });
+    Object.defineProperty(fn, "toString", { value: function() { return `function ${name}() { [native code] }`; }, writable: true, configurable: true });
     Object.defineProperty(proto, name, { value: fn, writable: true, enumerable: d.enumerable, configurable: true });
-    wrapped.add(fn);
   }
 
   function noiseCanvas(b64, rng) {
@@ -109,10 +106,6 @@ export function installFarbling(seedVal, factor) {
   if (document.fonts?.check) {
     document.fonts.check = function() { return true; };
   }
-  Object.defineProperty(Function.prototype, "toString", {
-    value: function() { return wrapped.has(this) ? `function ${this.name}() { [native code] }` : toStr.call(this); },
-    writable: true, configurable: true
-  });
 }
 
 /** WebRTC local IP leak prevention. */
