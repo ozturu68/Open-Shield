@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "openShield",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "minimum_chrome_version": "110",
   "description": "Privacy shield for Chromium browsers. Blocks trackers, ads, fingerprinting, link tracking, and WebRTC leaks silently.",
   "permissions": [
@@ -16,21 +16,27 @@
   ],
   "host_permissions": ["<all_urls>"],
   "background": {
-    "service_worker": "src/background.js",
+    "service_worker": "src/background/index.js",
     "type": "module"
   },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["src/cosmetic.js", "src/bounce.js", "src/link-protection.js", "src/click-to-load.js", "src/security.js"],
+      "js": [
+        "src/content/cosmetic.js",
+        "src/content/bounce.js",
+        "src/content/link-protection.js",
+        "src/content/click-to-load.js",
+        "src/content/security.js"
+      ],
       "run_at": "document_start",
       "world": "ISOLATED",
       "all_frames": true,
-      "match_about_blank": true
+      "match_about_blank": false
     }
   ],
   "action": {
-    "default_popup": "popup/popup.html",
+    "default_popup": "ui/popup/popup.html",
     "default_icon": {
       "16": "icons/shield-on-16.png",
       "32": "icons/shield-on-32.png",
@@ -39,7 +45,7 @@
     }
   },
   "options_ui": {
-    "page": "options/options.html",
+    "page": "ui/options/options.html",
     "open_in_tab": true
   },
   "declarative_net_request": {

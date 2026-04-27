@@ -136,6 +136,6 @@ const output = `/**
 })();
 `;
 
-const outPath = path.join(__dirname, "..", "src", "cosmetic.js");
+const outPath = path.join(__dirname, "..", "src", "content", "cosmetic.js");
 fs.writeFileSync(outPath, output, "utf-8");
 console.log(`Extracted ${selectors.length} cosmetic selectors -> ${outPath}`);

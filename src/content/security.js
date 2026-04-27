@@ -2,6 +2,7 @@
  * XSS & Clickjacking Protection
  * ISOLATED world content script — runs at document_start.
  * Detects transparent overlays (clickjacking) and reflected XSS patterns.
+ * Anti-debugging detection when combined with other suspicious patterns.
  */
 (function () {
   "use strict";
@@ -9,7 +10,6 @@
   const STYLE_ID = "__osSecurity";
   const BANNER_ID = "__osSecurityBanner";
 
-  // ── Clickjacking Detection ──
   function detectClickjackingOverlay() {
     const all = document.querySelectorAll("div, iframe, section, span");
     for (const el of all) {
@@ -28,7 +28,6 @@
     return null;
   }
 
-  // ── Reflected XSS Detection ──
   function detectReflectedXSS() {
     try {
       const qs = location.search;
@@ -43,7 +42,6 @@
       for (const p of patterns) {
         if (lower.includes(p)) return true;
       }
-      // Check if URL params appear in DOM as-is
       const params = new URLSearchParams(location.search);
       let html = document.documentElement?.outerHTML || "";
       html = html.substring(0, 50000);
@@ -57,14 +55,11 @@
     } catch { return false; }
   }
 
-  // ── Anti-Debugger / Anti-DevTools detection ──
   function detectAntiDebug() {
-    const devToolsOpen = (window.outerWidth - window.innerWidth > 100) ||
-                         (window.outerHeight - window.innerHeight > 100);
-    return devToolsOpen;
+    return (window.outerWidth - window.innerWidth > 100) ||
+           (window.outerHeight - window.innerHeight > 100);
   }
 
-  // ── Banner UI ──
   function showWarning(type) {
     if (document.getElementById(BANNER_ID)) return;
     const banner = document.createElement("div");
@@ -94,7 +89,6 @@
     chrome.runtime.sendMessage({ type: "SECURITY_ALERT", alertType: type, url: location.href }).catch(() => {});
   }
 
-  // ── CSS Injection ──
   function injectStyle() {
     if (document.getElementById(STYLE_ID)) return;
     const el = document.createElement("style");
@@ -104,19 +98,17 @@
     if (target) target.appendChild(el);
   }
 
-  // ── Run ──
   let runCalled = false;
   function run() {
     if (runCalled) return;
     runCalled = true;
     injectStyle();
 
-    // Check clickjacking
     const overlay = detectClickjackingOverlay();
+    const hasXSS = detectReflectedXSS();
     if (overlay) showWarning("clickjack");
-
-    // Check XSS
-    if (detectReflectedXSS()) showWarning("xss");
+    if (hasXSS) showWarning("xss");
+    if (detectAntiDebug() && (overlay || hasXSS)) showWarning("antiDebug");
   }
 
   if (document.readyState !== "loading") {

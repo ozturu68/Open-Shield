@@ -1,34 +1,34 @@
 /**
- * Shared configuration. Zero dependencies.
- * openShield v1.5.0 — Four-phase enhancement complete.
+ * openShield Core Configuration
+ * All shared constants, defaults, and magic numbers.
+ * Zero dependencies. Single source of truth.
  */
-
 export const DEFAULT_SETTINGS = {
-  ads: "standard",         // "standard" | "aggressive" | "off"
-  fp: true,                // fingerprinting protection
-  fpLevel: "medium",       // "low" | "medium" | "high" | "strict"
-  https: true,             // https upgrade
+  ads: "standard",
+  fp: true,
+  fpLevel: "medium",
+  https: true,
   cookies: "third-party",
   bounce: true,
   params: true,
   cosmetic: true,
   shred: false,
-  gpc: true,               // Global Privacy Control signal
-  linkProtection: true,    // strip tracking params from links
-  clickToLoad: true,       // social media embed blocking
-  dynamic3p: false,        // uBlock medium mode: block all 3p scripts/frames
-  proceduralCosmetic: true,// :has-text(), :matches-css(), :xpath() filters
-  learningMode: true,      // Privacy Badger-style heuristic tracking detection
-  secureJS: false,         // NoScript-style selective JS blocking
-  xssProtection: true,     // reflected XSS + clickjacking detection
-  ampProtection: true      // redirect Google AMP to canonical
+  gpc: true,
+  linkProtection: true,
+  clickToLoad: true,
+  dynamic3p: false,
+  proceduralCosmetic: true,
+  learningMode: true,
+  secureJS: false,
+  xssProtection: true,
+  ampProtection: true
 };
 
 export const FP_NOISE_FACTORS = {
   low: 0.25,
   medium: 1,
   high: 3,
-  strict: Infinity  // special flag for complete WebGL/canvas disable
+  strict: Infinity
 };
 
 export const KEY = {
@@ -67,11 +67,9 @@ export const BOUNCE_DOMAINS = [
   "bit.ly","tinyurl.com","buff.ly","rebrand.ly","short.link"
 ];
 
-// Privacy Badger-style: 3 domains threshold for auto-block
 export const COHORT_THRESHOLD = 3;
 export const MAX_SITES_PER_COHORT = 100;
 
-// Learning mode scoring weights
 export const TRACKING_SCORES = {
   thirdPartyCookie: 0.4,
   canvasFingerprint: 0.9,
@@ -107,7 +105,7 @@ export const TRACKING_PARAMS = [
   "ob_click_id","ob_ad_group_id","ob_publisher_id",
   "elqTrackId","elq_mid","elq_cid","elqTrack","elq",
   "mkt_tok","mkt_unsubscribe","mkt_seg","mkt_chnl",
-  "cid","conversion_id","conversion_type","conversion_source",
+  "conversion_id","conversion_type","conversion_source",
   "cvo_campaign","cvo_adgroup","cvo_creative","cvo_pid","cvo_adid",
   "cvo_sid","cvo_format","cvo_lineitem",
   "wp_sc","wp_tc","wp_cp","wp_mkt","wp_ref",
@@ -161,3 +159,49 @@ export const PROCEDURAL_OPERATORS = [
   "has-text","matches-css","xpath","upward","has","not",
   "min-text-length","matches-attr","matches-path"
 ];
+
+// ── DNR System Constants ──
+export const ALLOW_BASE = 100_000;
+export const JS_BLOCK_BASE = 200_000;
+export const COHORT_DNR_START = 300_000;
+export const LOG_MAX = 80;
+export const DNR_STATIC_LIMIT = 30_000;
+export const DNR_DYNAMIC_LIMIT = 5_000;
+
+// ── Performance Tuning ──
+export const COUNTERS_BATCH_MS = 250;
+export const LOG_BATCH_MS = 1000;
+export const FILTER_FETCH_TIMEOUT_MS = 45_000;
+export const FILTER_UPDATE_INTERVAL_MIN = 1440;
+export const COHORT_CLEANUP_DAYS = 30;
+
+// ── Filter Update System ──
+export const FILTER_META_KEY = "filterMeta";
+export const ALARM_FILTER_UPDATE = "filterUpdate";
+export const ALARM_COHORT_CLEANUP = "cohortCleanup";
+export const MAX_PER_LIST = 4000;
+
+export const ALLOWED_HOSTS = [
+  "easylist.to","easylist-downloads.adblockplus.org",
+  "raw.githubusercontent.com","filters.adtidy.org",
+  "chromium.googlesource.com"
+];
+
+export const FILTER_ID_RANGES = {
+  "ublock-filters":   { start: 10_000, end: 19_999 },
+  "ublock-privacy":   { start: 20_000, end: 29_999 },
+  "adguard-base":     { start: 30_000, end: 39_999 },
+  "adguard-tracking": { start: 40_000, end: 49_999 },
+  "__fallback":       { start: 50_000, end: 59_999 }
+};
+
+// ── Message Schemas ──
+export const MESSAGE_SCHEMAS = {
+  [MSG.GET_STATE]: { tabId: "number" },
+  [MSG.SET_SITE]: { h: "string", k: "string" },
+  [MSG.SET_GLOBAL]: { k: "string", v: "any" },
+  [MSG.GET_LOG]: { tabId: "number" },
+  [MSG.GET_COHORT_STATS]: {},
+  [MSG.BOUNCE]: { dest: "string" },
+  [MSG.SECURITY_ALERT]: { alertType: "string", url: "string" }
+};

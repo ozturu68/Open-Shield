@@ -1,8 +1,8 @@
 /**
  * Link Tracking Protection
  * ISOLATED world content script — runs at document_start, all frames.
- * Strips known tracking parameters from anchor hrefs on click,
- * before navigation occurs.
+ * Strips known tracking parameters from anchor hrefs both proactively
+ * (on page load) and reactively (on click), including cross-origin links.
  */
 (function () {
   "use strict";
@@ -52,7 +52,6 @@
   function stripTrackingParams(url) {
     try {
       const u = new URL(url, location.href);
-      if (u.hostname !== location.hostname) return url;
       let changed = false;
       for (const key of u.searchParams.keys()) {
         if (TRACKING_PARAMS.has(key)) {
@@ -64,6 +63,7 @@
     } catch { return url; }
   }
 
+  // Reactive: strip on click for cross-origin links
   document.addEventListener("click", function(e) {
     let target = e.target;
     while (target && target !== document) {

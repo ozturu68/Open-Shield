@@ -1,7 +1,7 @@
 /**
- * Pure utility functions.
+ * openShield Pure Utility Functions
+ * Zero side effects. All functions are testable in Node.js.
  */
-
 export function hostname(url) {
   try { return new URL(url).hostname; } catch { return ""; }
 }
@@ -20,6 +20,13 @@ export function seed() {
   return Array.from(a, b => b.toString(16).padStart(2, "0")).join("");
 }
 
+/**
+ * Deterministic PRNG returning [0, 1) from a seed string.
+ * Uses xorshift32 with seed hashing.
+ * @param {string} seedStr
+ * @param {number} [n=0] - Offset for generating multiple values from same seed
+ * @returns {number}
+ */
 export function rand(seedStr, n = 0) {
   let s = 0;
   for (let i = 0; i < seedStr.length; i++) s = (s * 31 + seedStr.charCodeAt(i)) >>> 0;
@@ -28,14 +35,20 @@ export function rand(seedStr, n = 0) {
   return (s >>> 0) / 4294967296;
 }
 
+/**
+ * Deep merge with prototype pollution protection.
+ * @param {object} base
+ * @param {object} over
+ * @returns {object}
+ */
 export function merge(base, over) {
+  if (base === null || typeof base !== "object") base = {};
+  if (over === null || typeof over !== "object") return base;
   const r = { ...base };
-  for (const k in over) {
-    if (!Object.prototype.hasOwnProperty.call(over, k)) continue;
+  for (const k of Object.keys(over)) {
     if (k === "__proto__" || k === "constructor" || k === "prototype") continue;
     const v = over[k];
-    r[k] = v !== null && typeof v === "object" && !Array.isArray(v)
-      ? merge(base[k], v) : v;
+    r[k] = v && typeof v === "object" && !Array.isArray(v) ? merge(r[k], v) : v;
   }
   return r;
 }
@@ -53,11 +66,6 @@ export function hashForId(s, base, range) {
   return base + (h % range);
 }
 
-/**
- * Extract domain from any URL or domain string.
- * @param {string} s
- * @returns {string}
- */
 export function extractDomain(s) {
   try {
     const u = new URL(s.includes("://") ? s : "https://" + s);
@@ -65,11 +73,6 @@ export function extractDomain(s) {
   } catch { return s; }
 }
 
-/**
- * Check if a URL is a Google AMP page.
- * @param {string} url
- * @returns {boolean}
- */
 export function isAMP(url) {
   try {
     const u = new URL(url);
@@ -79,11 +82,6 @@ export function isAMP(url) {
   } catch { return false; }
 }
 
-/**
- * Extract canonical URL from AMP page content.
- * @param {string} html
- * @returns {string|null}
- */
 export function extractAMPCanonical(html) {
   const match = html.match(/<link[^>]+rel=["']canonical["'][^>]+href=["']([^"']+)["']/i);
   return match ? match[1] : null;
@@ -91,8 +89,8 @@ export function extractAMPCanonical(html) {
 
 /**
  * Safe Chrome API wrapper with error handling.
- * @param {Function} fn - Async function to execute
- * @param {string} [context=''] - Context for error messages
+ * @param {Function} fn
+ * @param {string} [context='']
  * @returns {Promise<any>}
  */
 export async function safeApiCall(fn, context = "") {
@@ -110,15 +108,52 @@ export async function safeApiCall(fn, context = "") {
 
 /**
  * Message schema validator for background message handlers.
- * @param {object} message - The message to validate
- * @param {object} schema - The schema to validate against
+ * @param {object} message
+ * @param {object} schema - { key: "string"|"number"|"boolean"|"array"|"object"|"any" }
  * @returns {boolean}
  */
 export function validateMessage(message, schema) {
   if (!message || typeof message !== "object") return false;
   for (const [key, expectedType] of Object.entries(schema)) {
     if (expectedType === "any") continue;
+    if (expectedType === "array") { if (!Array.isArray(message[key])) return false; continue; }
     if (typeof message[key] !== expectedType) return false;
   }
   return true;
+}
+
+/**
+ * Validates a normalized hostname (lowercase, no www, valid chars).
+ * @param {string} h
+ * @returns {boolean}
+ */
+export function isValidHostname(h) {
+  return typeof h === "string" && h.length > 0 && h.length < 256 &&
+    /^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*$/.test(h);
+}
+
+/**
+ * Validates a destination URL for bounce/AMP redirects.
+ * @param {string} dest
+ * @returns {boolean}
+ */
+export function isValidDestination(dest) {
+  if (typeof dest !== "string" || dest.length > 4096) return false;
+  try {
+    const u = new URL(dest);
+    return (u.protocol === "https:" || u.protocol === "http:") && u.hostname.length > 0;
+  } catch { return false; }
+}
+
+/**
+ * Checks if a URL hostname is in the allowed fetch hosts list.
+ * @param {string} url
+ * @param {string[]} allowedHosts
+ * @returns {boolean}
+ */
+export function isValidSourceURL(url, allowedHosts) {
+  try {
+    const u = new URL(url);
+    return u.protocol === "https:" && allowedHosts.includes(u.hostname);
+  } catch { return false; }
 }

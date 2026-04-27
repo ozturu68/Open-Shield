@@ -7,7 +7,7 @@
 const assert = require("node:assert");
 const test = require("node:test");
 
-async function load() { return import("../../src/config.js"); }
+async function load() { return import("../../src/core/config.js"); }
 
 test("DEFAULT_SETTINGS includes fpLevel", async () => {
   const { DEFAULT_SETTINGS } = await load();

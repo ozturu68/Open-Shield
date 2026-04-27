@@ -18,7 +18,7 @@ const { execSync } = require("child_process");
 const ROOT = path.resolve(__dirname, "..");
 const CACHE = path.join(ROOT, "data", ".cache");
 const RULES = path.join(ROOT, "rules");
-const OUT = path.join(ROOT, "openShield-v1.0.0.zip");
+const OUT = path.join(ROOT, "openShield-v1.6.0.zip");
 
 function log(msg) { console.log(`[build] ${msg}`); }
 function die(msg) { console.error(`[build] ERROR: ${msg}`); process.exit(1); }

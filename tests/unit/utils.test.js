@@ -4,7 +4,7 @@
 const assert = require("node:assert");
 const test = require("node:test");
 
-async function load() { return import("../../src/utils.js"); }
+async function load() { return import("../../src/core/utils.js"); }
 
 test("hostname extracts hostname", async () => {
   const { hostname } = await load();

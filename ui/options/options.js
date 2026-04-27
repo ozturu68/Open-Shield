@@ -132,7 +132,22 @@
     loadStats();
     loadCohortStats();
 
-    setInterval(loadStats, 5000);
+    let statsInterval = setInterval(loadStats, 5000);
+
+    function handleVisibility() {
+      if (document.hidden) {
+        clearInterval(statsInterval);
+        statsInterval = null;
+      } else if (!statsInterval) {
+        statsInterval = setInterval(loadStats, 5000);
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibility);
+    window.addEventListener("unload", () => {
+      clearInterval(statsInterval);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    });
   }
 
   if (document.readyState === "loading") {

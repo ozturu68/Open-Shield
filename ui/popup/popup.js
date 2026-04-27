@@ -14,7 +14,7 @@
     });
   });
 
-  function browser(u) {
+  function isBrowserPage(u) {
     return !u || /^((chrome|edge|brave|about|chrome-extension|moz-extension):\/\/)/.test(u);
   }
 
@@ -42,12 +42,22 @@
 
   let tabId, hostname = "";
 
+  function updateShieldUI(on) {
+    const shieldIcon = $("shield-icon");
+    const statusText = $("status-text");
+    shieldIcon.classList.toggle("protected", on);
+    shieldIcon.classList.toggle("unprotected", !on);
+    statusText.classList.toggle("protected", on);
+    statusText.classList.toggle("unprotected", !on);
+    statusText.textContent = on ? "Protected" : "Unprotected";
+  }
+
   async function init() {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     tabId = tab.id;
     const url = tab.url || "";
 
-    if (browser(url)) {
+    if (isBrowserPage(url)) {
       $("restricted").classList.remove("hidden");
       $("main").classList.add("hidden");
       return;
@@ -77,44 +87,12 @@
 
     const on = cfg.shields !== false;
     $("master").checked = on;
-
-    const shieldIcon = $("shield-icon");
-    const statusText = $("status-text");
-
-    if (on) {
-      shieldIcon.classList.remove("unprotected");
-      shieldIcon.classList.add("protected");
-      statusText.classList.remove("unprotected");
-      statusText.classList.add("protected");
-      statusText.textContent = "Protected";
-    } else {
-      shieldIcon.classList.remove("protected");
-      shieldIcon.classList.add("unprotected");
-      statusText.classList.remove("protected");
-      statusText.classList.add("unprotected");
-      statusText.textContent = "Unprotected";
-    }
+    updateShieldUI(on);
   }
 
   $("master").addEventListener("change", async () => {
     const on = $("master").checked;
-    const shieldIcon = $("shield-icon");
-    const statusText = $("status-text");
-
-    if (on) {
-      shieldIcon.classList.remove("unprotected");
-      shieldIcon.classList.add("protected");
-      statusText.classList.remove("unprotected");
-      statusText.classList.add("protected");
-      statusText.textContent = "Protected";
-    } else {
-      shieldIcon.classList.remove("protected");
-      shieldIcon.classList.add("unprotected");
-      statusText.classList.remove("protected");
-      statusText.classList.add("unprotected");
-      statusText.textContent = "Unprotected";
-    }
-
+    updateShieldUI(on);
     await send(MSG.SET_SITE, { h: hostname, k: "shields", v: on });
   });
 
